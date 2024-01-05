@@ -1,0 +1,108 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Highcharts Example</title>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+		<style type="text/css">
+${demo.css}
+		</style>
+		<script type="text/javascript">
+
+$(document).ready(function()
+ { 
+	categoryval=location.search;
+	categoryval1=decodeURI(categoryval);
+	var c1= categoryval1.substr(11);
+	n=c1.search('&');
+	var category1=c1.substr(c1,n);
+	var c2= c1.substr(n+11);
+	n=c2.search('&');
+	var category2=c2.substr(c2,n);
+	var c3= c2.substr(n+11);
+	n=c3.search('&');
+	var category3=c3.substr(c3,n);
+	var category4= c3.substr(n+11);
+	
+		$.getJSON("jsondata.json", function (data) 
+		{
+		var datasite= new Array;
+		var data1=new Array;
+		if (category1=='All')
+		{
+		for (i=0;i<data.length;i++)
+		{
+		data1.push([data[i]["visitors"]]);
+		datasite.push(data[i]["site"]);
+		}
+		}
+		
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==category1 && category2=='--SELECT--' && category3=='--SELECT--' && category4=='--SELECT--')
+		{
+		data1.push([data[i]["visitors"]]);
+		datasite.push(data[i]["site"]);
+		}
+	
+		if (data[i]["chains"]==category1 && data[i]["site"]==category2 && category3=="--SELECT--" && category4=="--SELECT--")
+		{
+		data1.push([data[i]["visitors"]]);
+		datasite.push(data[i]["site"]);
+		}
+		
+		if (data[i]["chains"]==category1 && data[i]["site"]==category2 && data[i]["zone"]==category3 && category4=="--SELECT--")
+		{
+		data1.push([data[i]["visitors"]]);
+		datasite.push(data[i]["site"]);
+	
+		}
+		
+		if (data[i]["chains"]==category1 && data[i]["site"]==category2 && data[i]["zone"]==category3 && data[i]["date"]==category4)
+		{
+		data1.push([data[i]["visitors"]]);
+		datasite.push(data[i]["site"]);
+		}
+		
+		
+		}	
+		
+		$('#container').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Hourly Comparisom Visitors Report'
+        },
+        xAxis: {
+            categories: datasite
+        },
+        yAxis: {
+            title: 
+			{
+                text: 'Hourly Comparisom Report'
+            }
+        },
+        series: [{
+            name: 'visitors',
+			color : '#2E6DA4',
+			data: data1
+       }]
+		
+		});
+		
+		});
+		});
+
+
+  </script>
+	</head>
+	<body>
+<script src="Highcharts/js/highcharts.js"></script>
+
+<div id="container" style="height:30%; "></div>
+	</body>
+</html>

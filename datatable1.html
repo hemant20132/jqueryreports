@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-------jquery and bootstrap scripts-->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<!--- datatables---->
+<link rel="stylesheet" href="datatables/media/css/jquery.dataTables.min.css">
+<script src="datatables/media/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.1.0/js/dataTables.select.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.1.0/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
+<script src="https://cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.1.0/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.1.0/js/buttons.print.min.js"></script>
+
+<!-------highcharts scripts-->
+<script src="Highcharts/js/highcharts.js"></script>
+<script src="Highcharts/js/modules/exporting.js"></script>
+<script src="Highcharts/js/modules/canvas-tools.js"></script>
+<script src="Highcharts/js/modules/export-csv.js"></script>
+<script src="Highcharts/js/modules/jspdf.min.js"></script>
+<script src="Highcharts/js/highcharts-export-clientside.js"></script>
+
+
+<!-------Multiple select with checkboxes  scripts-->
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+<!-------Daterangepicker scripts-->
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+</head>
+
+<body>
+
+<div class="table-responsive"> 
+	<table id="table1" class="display">
+	<thead>
+            <tr>
+                <th>timeperiod</th>
+                <th>visitors</th>
+            </tr>
+    </thead>
+	</table>
+</div>
+	
+<div id="container1" ></div>	
+
+
+<script>
+//jsondatafile="https://api.myjson.com/bins/1z57h";
+jsondatafile="jsondata.json";
+$(document).ready(function()
+{
+	$('#table1').DataTable({
+	  dom: 'Bfrtip',
+	  ajax: {
+        url:'jsondata.json',
+        dataSrc:''
+    },
+    columns:[
+		{data:'timeperiod'},
+        {data:'visitors'}
+	],
+	select: true,
+        buttons: [
+            {
+                extend: 'collection',
+                text: 'Export',
+                buttons: [
+                    'copy',
+                    'excel',
+                    'csv',
+                    'pdf',
+                    'print'
+                ]
+            }
+        ]
+    
+	});
+	var data1=new Array();
+	var datatimeperiod1= new Array();
+
+$.getJSON(jsondatafile, function (data) 
+	{
+	for (i=0;i<data.length;i++)
+		{
+		data1.push(data[i]["visitors"]);
+		datatimeperiod1.push(data[i]["timeperiod"]);
+		}
+	});
+	showgraph(data1,datatimeperiod1);	
+});
+		
+function showgraph(data1,datatimeperiod1)
+{
+var graph1=$('#container1').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Hourly Comparison Visitors Report'
+        },
+        xAxis: {
+            categories:datatimeperiod1
+        },
+        yAxis: {
+            title: 
+			{
+                text: 'Hourly Comparisom Report'
+            }
+        },
+        series: [{
+		    name:'visitors',
+			color:'#006A72',
+			data:data1	
+	  }]
+	});
+}
+	
+
+</script>
+
+</body>
+</html>

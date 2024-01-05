@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8"> 
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+</head>
+<script>
+$(document).ready(function()
+{
+jsondatafile="https://api.myjson.com/bins/4g2qr";
+$.getJSON(jsondatafile, function (data) 
+	{	
+		for (i=0;i<data.length;i++)
+		{
+		var visitors=0;
+		var sales=0;
+		var transaction=0;
+		var itemssold=0;
+		var staff=0;
+		var conversion=0;
+		var avgsales=0;
+		var avgcustomervalue=0;
+		var avgbasketsize=0;
+		var custtostfrat=0;
+		var	itempercust=0;
+		var salperstaf=0;
+		
+		visitors=visitors+parseInt(data[i].visitors);
+		sales=sales+parseFloat(data[i].sales);
+		transaction=transaction+parseInt(data[i].transaction);
+		itemssold=itemssold+parseInt(data[i].itemssold);
+		staff=staff+parseInt(data[i].satff);
+		conversion=conversion+parseFloat(data[i].conversion);
+		avgsales=avgsales+parseFloat(data[i].avgsales);
+		avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+		avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+		custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+		itemspercust=itempercust+parseInt(data[i].itempercust);
+		salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+		}
+		
+		$("#tablediv").append("<table id='trendanalysistable'>");
+		
+		$("#tablediv").append("<tr><td>VISITORS<br>"+visitors+"</td>");
+		$("#tablediv").append("<td>SALES<br>"+sales+"</td>");
+		$("#tablediv").append("<td>TRANSACTION<br>"+transaction+"</td>");
+		$("#tablediv").append("<td>ITEMS SOLD<br>"+itemssold+"</td></tr>");
+			
+		$("#tablediv").append("<tr><td>STAFF<br>"+staff+"</td>");
+		$("#tablediv").append("<td>CONVERSION<br>"+conversion+"</td>");
+		$("#tablediv").append("<td>AVG.SALES <br>"+avgsales+"</td>");
+		$("#tablediv").append("<td>AVG.CUSTOMER VALUE<br>"+avgcustomervalue+"</td></tr>");
+
+		$("#tablediv").append("<tr><td>AVG.BASKET SIZE<br>"+avgbasketsize+"</td>");
+		$("#tablediv").append("<td>CUST.TO STAFF RATIO<br>"+custtostfrat+"</td>");
+		$("#tablediv").append("<td>ITEMS PER CUSTOMER<br>"+itemspercust+"</td>");
+		$("#tablediv").append("<td>SALE PER STAFF<br>"+salperstaf+"</td></tr>");
+		
+		$("#tablediv").append("</table>");
+		});
+});
+	</script>
+	<body>
+		
+		<div id="tablediv"></div>	
+	
+	
+	</body>
+	
+	</html>

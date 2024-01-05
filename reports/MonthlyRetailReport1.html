@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"> 
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-------jquery and bootstrap scripts-->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<!-------dynatable  scripts-->
+<link rel="stylesheet" media="all" href="dynatable/jquery.dynatable.css">
+<script type="text/javascript" src="dynatable/jquery.dynatable.js"></script>
+
+<!-------tableexport scripts-->
+<script type="text/javascript" src="tableexport/tableExport.js"></script>
+<script type="text/javascript" src="tableexport/jquery.base64.js"></script>
+<script type="text/javascript" src="tableexport/html2canvas.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/sprintf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.min.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/base64.js"></script>
+
+<!-------highcharts scripts-->
+<script src="Highcharts/js/highcharts.js"></script>
+<script src="Highcharts/js/modules/exporting.js"></script>
+<script src="Highcharts/js/modules/canvas-tools.js"></script>
+<script src="Highcharts/js/modules/export-csv.js"></script>
+<script src="Highcharts/js/modules/jspdf.min.js"></script>
+
+<script src="Highcharts/js/highcharts-export-clientside.js"></script>
+
+<!-------Multiple select with checkboxes  scripts-->
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+<!-------Daterangepicker scripts-->
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+
+
+</head>
+<body>
+
+<style>
+ul
+{
+width:100%;
+}
+
+ul li
+{
+margin-left:10%;
+}
+
+ul.multiselect-container.dropdown-menu
+{
+border:1px solid lightgrey;
+}
+</style>
+
+<center>
+
+<div class="container">
+<div class="row">
+<div  class="col-sm-12 col-md-12 col-lg-12">
+<h2>Monthly Retail Comparision Report</h2>
+</div>
+</div>
+
+
+<div class="row">
+<nav class="navbar-default" style="background-color:#fff;" >
+  <div class="container-fluid">
+    <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menubar1">
+	MENU
+	<span class="glyphicon glyphicon-menu-hamburger"></span>
+	</button>
+    </div>
+ 
+	<div class="collapse navbar-collapse"  id="menubar1" style="margin-left:5%;margin-right:5%;background-color:#fff;">
+      <ul class="nav navbar-nav" style="border:1px solid lightgrey;text-align:center" >
+
+	 <li> 
+	SELECT CHAIN<br>
+	<select id="category1" multiple="multiple">
+	<option value='All'>All</option></select>	
+	</li>
+	
+	 <li> 
+	SELECT SITE<br>
+	<select id="category2" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT ZONE<br>
+	<select id="category3" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT DATE<br>
+	      <input id="category4" type="text" name="daterange" value="Date" style="width:auto;margin-top:4px;"/> 
+	</li>
+</div>
+	  </ul>
+	</div>
+</nav>
+</div>
+
+
+
+<div class="row">
+
+	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+	<div class="table-responsive" id="tablediv">
+
+<div class="btn-group">
+	  
+	  <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	  Export
+	  </button>
+	  
+	  <div class="dropdown-menu">
+		<li><a href="#" onclick="printData()">PRINT</a></li>
+		<li><a href="#" onclick="$('#table1').tableExport({type:'csv',escape:'false'});"> CSV</a></li>
+		<li><a href="#" onclick="$('#table1').tableExport({type:'excel',escape:'false'});"> XLS</a></li>
+		<li><a href="#" onclick="$('#table1').tableExport({type:'png',escape:'false'});"> PNG</a></li>
+		<li><a href="#" onclick="$('#table1').tableExport({type:'pdf',pdfFontSize:'7',escape:'false'});">PDF</a></li>
+	  </div>
+	  
+	</div>
+		
+	
+	</div>
+	</div>
+	
+</div>
+
+<div class="row">
+	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+	<div id="container1" style=""></div>
+	</div>
+</div>
+	
+
+
+</div>
+
+<script>
+$(window).load(function()
+{
+	$(".se-pre-con").fadeOut("slow");
+});
+
+$(document).ready(function()
+{
+		$('#category4').daterangepicker({
+		showDropdowns: true,
+		opens: "right",
+		locale: {
+	    format: 'DD/MM/YYYY'
+        }
+		});
+
+ $("#category1").multiselect();
+ $("#category2").multiselect();
+ $("#category3").multiselect();
+
+jsondatafile="https://api.myjson.com/bins/1z57h";
+ $.getJSON(jsondatafile, function(data) 
+	{
+	var continent=[];
+	var location=[];
+	var entrance=[];
+	var oldcontinent='';
+	var oldlocation='';
+	var oldentrance='';
+	var olddate='';
+	j=0;
+	k=0;
+	l=0;
+	m=0;
+
+	for (i=0;i<data.length;i++)
+	{
+		if (data[i]["chains"] != oldcontinent)
+		{
+			continent[j]=data[i]["chains"];
+			j=j+1;
+		}
+		oldcontinent=data[i]["chains"];
+
+		if (data[i]["sites"] != oldlocation)
+		{
+			location[k]=data[k]["sites"];
+			k=k+1;
+		}
+		oldlocation=data[i]["sites"];
+		
+		if (data[i]["zones"] != oldentrance)
+		{
+		entrance[l]=data[i]["zones"];
+		l=l+1;
+		}
+		oldentrance=data[i]["zones"];
+	
+	}
+		
+		var datavisitors1= new Array();
+		var data1=new Array();
+		var datedata=new Array();
+		var datedata1=new Array();
+		
+		for(i=0;i<data.length;i++)
+		{
+		datenew=data[i].date.replace("."," ");
+		datenew1=moment(datenew);
+		datenew2=new Date(datenew);
+		datedata1.push(datenew2);//new datejavascript//
+		datedata.push(datenew1);//with moment //
+		}
+		var datemin1=moment.min(datedata);//minimum of date of json feed//
+		var datemax1=moment.max(datedata);//maximum of date of json feed//
+		
+		var month = new Array();
+		month[0] = "january";
+		month[1] = "february";
+		month[2] = "march";
+		month[3] = "april";
+		month[4] = "may";
+		month[5] = "june";
+		month[6] = "july";
+		month[7] = "august";
+		month[8] = "september";
+		month[9] = "october";
+		month[10] = "november";
+		month[11] = "december";
+	
+	var month1 = new Array();
+		month1[0] = "Jan.";
+		month1[1] = "Feb.";
+		month1[2] = "Mar.";
+		month1[3] = "Apr.";
+		month1[4] = "May";
+		month1[5] = "Jun.";
+		month1[6] = "Jul.";
+		month1[7] = "Aug.";
+		month1[8] = "Sep.";
+		month1[9] = "Oct.";
+		month1[10] = "Nov.";
+		month1[11] = "Dec.";
+		
+		
+			var monthtotalvisitors=0;
+			var datafortable1=new Array();
+			
+			for (k=datemin1.get('month');k<=datemax1.get('month');k++)
+				{
+				data1.push(month[k]);
+				}
+				
+				for (i=1;i<data.length;i++)
+				{
+					var datetocompare=data[i].date.replace(".","");
+					datetocompare1=moment(datetocompare);
+					var datatable1='';
+					datatable1=datatable1+'{"calenderday":"'+datetocompare1.get('date')+'"';
+					m=datemin1.get('month');
+					day1=datetocompare1.get('day');
+						for (z=datemin1.get('month');z<=datemax1.get('month');z++)
+						{	
+						var datetocomparenext=month1[z]+" "+day1+", "+datetocompare1.get('year');
+						var	totaldayvisitors=0;
+							for (j=0;j<data.length;j++)
+							{
+								if (data[j].date==datetocomparenext)
+								{
+								totaldayvisitors=totaldayvisitors+data[j].visitors;
+								}
+							}
+						datatable1=datatable1+',"'+month1[z]+'":"'+totaldayvisitors+'"';
+						}
+						
+						datatable1=datatable1+"}";
+						datafortable1.push(JSON.parse(datatable1));
+					
+				}
+				
+					
+					for(day1=datemin1.get('month');day1<=datemax1.get('month');day1++)   
+					{
+						if ($.inArray(month[day1],data1))
+						{
+						data1.push(month[day1]);
+						}
+						var	totaldayvisitors=0
+						for (j=1;j<data.length;j++)
+						{
+								var datetocompare2=data[j].date.replace(".","");
+								datetocompare3=moment(datetocompare2);
+				
+								if (datetocompare3.get('month')==day1)
+								{
+								totaldayvisitors=totaldayvisitors+data[j]["visitors"];
+								}
+						}
+						datavisitors1.push(totaldayvisitors);
+					}
+		
+				
+				
+				
+				
+			$("#tablediv").append("<table id='table1' class='table table-bordered'><caption style='font-size:14pt;'><img src='logo.jpeg'/>Monthly Retail Comparison Report"+Date()+"</caption><thead><th>calenderday</th><th>october</th><th>november</th><th>december</th><thead><tbody></tbody></table>");
+			
+			showtable(datafortable1);
+			showgraph(data1,datavisitors1);
+			
+			for (j=0;j<continent.length;j++)
+			{
+					if (continent[j].indexOf(" ")>0)
+					{
+					var continent1=continent[j].split(' ').join('_');
+					$("#category1").append("<option value="+continent1+">"+continent1+"</option>");
+					}	
+					
+					if (continent[j].indexOf(" ")==-1)
+					{
+					$("#category1").append("<option value="+continent[j]+">"+continent[j]+"</option>");
+					}
+			}
+	$('#category1').multiselect('rebuild');
+});
+	
+
+	
+$("#category1").change(function()
+	{
+		category1=$("#category1").val();
+		$("#category2").empty();
+		$("#category2").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category2").multiselect('rebuild');
+		
+		if (category1=="All")
+		{
+		var datasite1=new Array;
+		var data1=new Array;
+		var datafortable1= new Array;
+		totalvisitors=0;
+		
+		$.getJSON(jsondatafile, function(data) 
+	{
+	var continent=[];
+	var location=[];
+	var entrance=[];
+	var oldcontinent='';
+	var oldlocation='';
+	var oldentrance='';
+	var olddate='';
+	j=0;
+	k=0;
+	l=0;
+	m=0;
+
+	for (i=0;i<data.length;i++)
+	{
+		if (data[i]["chains"] != oldcontinent)
+		{
+			continent[j]=data[i]["chains"];
+			j=j+1;
+		}
+		oldcontinent=data[i]["chains"];
+
+		if (data[i]["sites"] != oldlocation)
+		{
+			location[k]=data[k]["sites"];
+			k=k+1;
+		}
+		oldlocation=data[i]["sites"];
+		
+		if (data[i]["zones"] != oldentrance)
+		{
+		entrance[l]=data[i]["zones"];
+		l=l+1;
+		}
+		oldentrance=data[i]["zones"];
+	
+	}
+		
+		var datavisitors1= new Array();
+		var data1=new Array();
+		var datedata=new Array();
+		var datedata1=new Array();
+		
+		for(i=0;i<data.length;i++)
+		{
+		datenew=data[i].date.replace("."," ");
+		datenew1=moment(datenew);
+		datenew2=new Date(datenew);
+		datedata1.push(datenew2);//new datejavascript//
+		datedata.push(datenew1);//with moment //
+		}
+		var datemin1=moment.min(datedata);//minimum of date of json feed//
+		var datemax1=moment.max(datedata);//maximum of date of json feed//
+		
+		var month = new Array();
+		month[0] = "january";
+		month[1] = "february";
+		month[2] = "march";
+		month[3] = "april";
+		month[4] = "may";
+		month[5] = "june";
+		month[6] = "july";
+		month[7] = "august";
+		month[8] = "september";
+		month[9] = "october";
+		month[10] = "november";
+		month[11] = "december";
+	
+	var month1 = new Array();
+		month1[0] = "Jan.";
+		month1[1] = "Feb.";
+		month1[2] = "Mar.";
+		month1[3] = "Apr.";
+		month1[4] = "May";
+		month1[5] = "Jun.";
+		month1[6] = "Jul.";
+		month1[7] = "Aug.";
+		month1[8] = "Sep.";
+		month1[9] = "Oct.";
+		month1[10] = "Nov.";
+		month1[11] = "Dec.";
+		
+		
+			var monthtotalvisitors=0;
+			var datafortable1=new Array();
+			
+			for (k=datemin1.get('month');k<=datemax1.get('month');k++)
+				{
+				data1.push(month[k]);
+				}
+				
+				for (i=1;i<data.length;i++)
+				{
+					
+					var datetocompare=data[i].date.replace(".","");
+					datetocompare1=moment(datetocompare);
+					var datatable1='';
+					
+					datatable1=datatable1+'{"calenderday":"'+datetocompare1.get('date')+'"';
+					m=datemin1.get('month');
+					
+					for(day1=1;day1<=datemax1.get('month');day1++)   
+					{
+					if (day1<10)
+					{
+					day1="0"+day1;
+					}
+					if (day1==datetocompare1.get('date'))
+					{
+						for (z=datemin1.get('month');z<=datemax1.get('month');z++)
+						{	
+						var datetocomparenext=month1[z]+" "+day1+", "+datetocompare1.get('year');
+						var	totaldayvisitors=0
+						
+						for (j=1;j<data.length;j++)
+						{
+						if ( data[j].date==datetocomparenext)
+						{
+						totaldayvisitors=totaldayvisitors+data[j].visitors;
+						var datecompare1=data[j].date.replace(".","");
+						datecompare2=moment(datecompare1);
+						}
+						}
+						datatable1=datatable1+',"'+month[datecompare2.get('month')]+'":"'+totaldayvisitors+'"';
+						}
+						
+						datatable1=datatable1+"}";
+						datafortable1.push(JSON.parse(datatable1));
+					}
+					}
+				}
+				
+					
+					for(day1=datemin1.get('month');day1<=datemax1.get('month');day1++)   
+					{
+						if ($.inArray(month[day1],data1))
+						{
+						data1.push(month[day1]);
+						}
+						var	totaldayvisitors=0
+						for (j=1;j<data.length;j++)
+						{
+								var datetocompare2=data[j].date.replace(".","");
+								datetocompare3=moment(datetocompare2);
+				
+								if (datetocompare3.get('month')==day1)
+								{
+								totaldayvisitors=totaldayvisitors+data[j]["visitors"];
+								}
+						}
+						datavisitors1.push(totaldayvisitors);
+					}
+		
+				
+				
+				
+				
+			$("#tablediv").append("<table id='table1' class='table table-bordered'><thead><th>calenderday</th><th>october</th><th>november</th><th>december</th><thead><tbody></tbody></table>");
+			
+			
+			showtable(datafortable1);
+			showgraph(data1,datavisitors1);
+			
+			for (j=0;j<continent.length;j++)
+			{
+					if (continent[j].indexOf(" ")>0)
+					{
+					var continent1=continent[j].split(' ').join('_');
+					$("#category1").append("<option value="+continent1+">"+continent1+"</option>");
+					}	
+					
+					if (continent[j].indexOf(" ")==-1)
+					{
+					$("#category1").append("<option value="+continent[j]+">"+continent[j]+"</option>");
+					}
+			}
+	$('#category1').multiselect('rebuild');
+});
+}
+		
+		if (category1[0]!="All" && category1[1]!="")
+		{
+			$.getJSON(jsondatafile,function (data) 
+			{
+			data1=new Array();
+			datasite1=new Array();
+			datafortable1=new Array();
+			sitename1= new Array();
+			totalvisitors=0;
+			for (j=0;j<category1.length;j++)
+			{	
+					if (category1[j].indexOf("_")>0)
+					{
+					var chainname= category1[j].split(' ').join('_');
+					}
+					if (category1[j].indexOf("_")==-1)
+					{
+					var chainname=category1[j];
+					}
+			
+				for (i=0;i<data.length;i++)
+				{
+					if (data[i]["chains"]==chainname)	
+					{
+					totalvisitors=totalvisitors+data[i].visitors;
+					datafortable1.push({"timeperiod":data[i]["timeperiod"],
+					"visitors":data[i]["visitors"]
+					});
+					data1.push([data[i]["visitors"]]);
+					if (data[i]["sites"].indexOf(" ")>0)
+					{
+					var sitename=data[i]["sites"].split(' ').join('_');
+					}
+					if (data[i]["sites"].indexOf(" ")==-1)
+					{
+					var sitename=data[i]["sites"];
+					}
+					
+					
+					datasite1.push(data[i]["timeperiod"]);
+					if ($.inArray(sitename,sitename1)==-1)
+					{
+					sitename1.push(sitename);
+					$("#category2").append("<option value="+sitename+">"+sitename+"</option>");
+					}
+					$("#category2").multiselect('rebuild');
+					}	
+				}
+			}
+			
+				var dynatable = $('#table1').data('dynatable');                
+                dynatable.records.updateFromJson({records:datafortable1});
+                dynatable.records.init();               
+                dynatable.process();  
+				$("#totaldiv").html("");
+				$("#totaldiv").html("TOTAL VISITORS:<br><span style='text-align:center;'>"+totalvisitors+"</span>");
+				var graph1=$('#container1').highcharts();
+				graph1.series[0].setData(data1);
+				graph1.xAxis[0].setCategories(datasite1);
+				graph1.series.options.pointWidth = 40;
+				graph1.redraw();
+			
+			});
+		}
+});
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+});
+
+function showtable(datafortable1)
+{
+		
+		$("#table1").dynatable({
+		  dataset:{records:datafortable1}
+		});
+}		
+
+function showgraph(data1,datavisitors1)
+{
+				
+var graph1=$('#container1').highcharts({
+        chart: {
+            type: 'column'
+        },
+		
+		credits: {
+		enabled: false
+		},
+		
+        title: {
+            text: 'Graph of Months and Visitors'
+        },
+        xAxis: {
+            categories:data1
+        },
+        yAxis: {
+            title: 
+			{
+                text: 'Visitors in Month'
+            }
+        },
+        series: [{
+		    name: 'Visitors',
+			color : '#006A72' ,
+			data:datavisitors1	
+	  }]
+	});
+}
+
+function printData()
+{
+   var divToPrint=document.getElementById("table1");
+   newWin= window.open("");
+   newWin.document.write(divToPrint.outerHTML);
+   newWin.print();
+   newWin.close();
+}
+</script>
+
+
+</body>
+</center>
+</html>

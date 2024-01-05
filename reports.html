@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8"> 
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+</head>
+<body>
+<script>
+$(document).ready(function()
+{
+$(".bs-example).find(".panel-collapse collapse in").trigger('collapse');
+
+});
+</script>
+<div class="se-pre-con"></div>
+<center>
+<div class="bs-example">
+
+    <div class="panel-group" id="accordion">
+
+	<div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Hourly Retail Reports</a>
+                </h4>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse in">
+            <div class="panel-body">
+					<a href="HourlyRetailReport1.html">HourlyRetailComparisionReport</a><br>
+                    <a href="HourlyRetailReport2.html">HourlyRetailExecutiveSummaryReport</a><br>
+                    <a href="HourlyRetailReport3.html">HourlyRetailTrendAnalysisReport</a>
+			</div>
+			</div>
+    </div>
+		
+	
+	<div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapsetwo">Hourly Traffic Reports</a>
+                </h4>
+            </div>
+            <div id="collapsetwo" class="panel-collapse collapse in">
+            <div class="panel-body">
+					<a href="">HourlyTrafficCalendarSummaryReport</a><br>
+                    <a href="HourlyTrafficReport2.html">HourlyTrafficComparisonReport</a><br>
+                    <a href="">HourlyTrafficTrendAnalysisReport</a>
+			</div>
+			</div>
+    </div>
+	
+	
+	<div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapsefour">Daily Traffic Reports </a>
+                </h4>
+            </div>
+            <div id="collapsefour" class="panel-collapse collapse in">
+            <div class="panel-body">
+                    <a href="DailyTrafficReport3.html">DailyTrafficTrendAnalysisReport</a>
+			</div>
+			</div>
+    </div>
+	
+	
+	<div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapsefive">WeeklyRetailComparisionReport</a>
+                </h4>
+            </div>
+            <div id="collapsefive" class="panel-collapse collapse in">
+            <div class="panel-body">
+					<a href="WeeklyRetailReport1.html">WeeklyRetailComparisionReport</a><br>
+			</div>
+			</div>
+    </div>
+
+	
+    <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseseven">Monthly Retail Reports</a>
+                </h4>
+            </div>
+            <div id="collapseseven" class="panel-collapse collapse in">
+            <div class="panel-body">
+					<a href="MonthlyRetailReport1.html">MonthlyRetailComparisionReport</a><br>
+            		<a href="HourlySiteComparisonReport.html">Hourly Site Comparison Report</a><br>
+			        <a href="WeeklyHourlyReport1.html">WeeklyHourlyReport</a>
+					<a href="HourlyComparisonReport.html">HourlyComparisonReport</a>
+					
+
+			</div>
+			</div>
+    </div>
+	</div>
+</div>
+
+</center>	
+</body>
+</html>

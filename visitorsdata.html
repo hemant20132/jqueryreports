@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="shortcut icon" type="image/ico" href="http://www.datatables.net/favicon.ico">
+	<meta name="viewport" content="initial-scale=1.0">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="main.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.1.0/css/buttons.dataTables.min.css">
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.1.0/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.1.0/js/buttons.flash.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.1.0/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.1.0/js/buttons.print.min.js"></script>
+<script type="text/javascript" src="https://cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.1.0/js/dataTables.select.min.js"></script>
+<script type="text/javascript" language="javascript" class="init">
+	
+$(document).ready(function()
+{	
+	
+	categoryval=location.search;
+	
+	categoryval1=decodeURI(categoryval);
+	var c1= categoryval1.substr(11);
+	n=c1.search('&');
+	var category1=c1.substr(c1,n);
+	var c2= c1.substr(n+11);
+	n=c2.search('&');
+	var category2=c2.substr(c2,n);
+	var c3= c2.substr(n+11);
+	n=c3.search('&');
+	var category3=c3.substr(c3,n);
+	var category4= c3.substr(n+11);
+	
+	
+	$.getJSON("jsondata.json", function (data) 
+		{
+		data2=new Array;
+		if (category1=='All')
+		{
+		for (i=0;i<data.length;i++)
+		{
+		data2.push([data[i]["visitors"],data[i]["visitorspastday"],data[i]["visitorspastweek"]]);
+		}
+		}
+		
+		for (i=0;i<data.length;i++)
+		{
+		
+		if (data[i]["chains"]==category1 && category2=="--SELECT--" && category3=="--SELECT--" && category4=="--SELECT--")
+		{
+		data2.push([data[i]["visitors"],data[i]["visitorspastday"],data[i]["visitorspastweek"]]);
+		}
+		
+		if (data[i]["chains"]==category1 && data[i]["site"]==category2 && category3=="--SELECT--" && category4=="--SELECT--")
+		{
+		data2.push([data[i]["visitors"],data[i]["visitorspastday"],data[i]["visitorspastweek"]]);
+		}
+	
+		if (data[i]["chains"]==category1 && data[i]["site"]==category2 && data[i]["zone"]==category3 && category4=="--SELECT--")
+		{
+		data2.push([data[i]["visitors"],data[i]["visitorspastday"],data[i]["visitorspastweek"]]);
+		}
+		
+		if (data[i]["chains"]==category1 && data[i]["site"]==category2 && data[i]["zone"]==category3 && data[i]["date"]==category4)
+		{
+		data2.push([data[i]["visitors"],data[i]["visitorspastday"],data[i]["visitorspastweek"]]);
+		}
+	
+		
+		}
+		$('#visitors1').DataTable({
+		responsive: {
+        breakpoints: [
+            { name: 'desktop', width: Infinity },
+            { name: 'tablet',  width: 1024 },
+            { name: 'fablet',  width: 768 },
+            { name: 'phone',   width: 480 }
+        ]
+		},
+		"data":data2,
+		autoWidth:true,
+		search:false,
+   		info:  false,
+        columns: [
+            {title:"visitors"},
+            {title:"visitorspastday"},
+            {title:"visitorspastweek"}
+        ],
+		dom: 'Bfrtip',
+		select: true,
+        buttons: [
+		{
+                extend: 'collection',
+                text: 'Export',
+                buttons: [
+                    'copy',
+                    'excel',
+                    'csv',
+                    'pdf',
+                    'print'
+                ]
+         }
+		]
+		});
+		
+		});
+		
+	
+});
+
+</script>
+</head>
+<body>
+<div id="container" style="height:40%; ">
+<table id="visitors1" class="cell-border" cellspacing="0" width="100%">
+<thead>
+            <tr>
+                <th>visitors</th>
+                <th>visitorspastday</th>
+                <th>visitorspastweek</th>
+				
+				
+				
+            </tr>
+        </thead>
+       </table>
+</div>	   
+</body>
+</html>

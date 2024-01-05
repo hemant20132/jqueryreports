@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8"> 
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+
+</head>
+
+<body>
+
+<input id="daterange1" type="text" name="daterange" value="" style="width:250px;"/>
+
+<script type="text/javascript">
+
+$(document).ready(function()
+{
+
+
+
+    $('#daterange1').daterangepicker({
+        timePicker: true,
+        timePickerIncrement: 30,
+        locale: {
+            format: 'DD/MM/YYYY h:mm A'
+        }
+    });
+
+var datetime1=$("#daterange1").val();
+datetimeno=datetime1.search("-");
+
+var datefrom=datetime1.substr(0,datetimeno);
+alert(datefrom);
+
+dateto=datetime1.substr(datetimeno+1);
+alert(dateto));
+dateto1=new Date(dateto);
+alert(dateto1);
+
+
+
+
+<!---------------end -- date---->
+jsondatafile="https://api.myjson.com/bins/4g2qr";
+$.getJSON(jsondatafile, function (data) 
+	{
+	for (i=0;i<data.length;i++)
+	{
+	var date2=data[i].date.replace("."," ");
+	var date1=new Date(date2);
+	}
+	});
+});
+
+</script>
+
+</body>
+
+
+
+</html>
+

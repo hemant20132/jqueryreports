@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8"> 
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-------jquery and bootstrap scripts-->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<!-------dynatable  scripts-->
+<link rel="stylesheet" media="all" href="dynatable/jquery.dynatable.css">
+<script type="text/javascript" src="dynatable/jquery.dynatable.js"></script>
+
+<!-------tableexport scripts-->
+<script type="text/javascript" src="tableexport/tableExport.js"></script>
+<script type="text/javascript" src="tableexport/jquery.base64.js"></script>
+<script type="text/javascript" src="tableexport/html2canvas.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/sprintf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.min.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/base64.js"></script>
+
+<!-------highcharts scripts-->
+<script src="Highcharts/js/highcharts.js"></script>
+<script src="Highcharts/js/modules/exporting.js"></script>
+<script src="Highcharts/js/modules/canvas-tools.js"></script>
+<script src="Highcharts/js/modules/export-csv.js"></script>
+<script src="Highcharts/js/modules/jspdf.min.js"></script>
+<script src="Highcharts/js/highcharts-export-clientside.js"></script>
+
+<!-------Multiple select with checkboxes  scripts-->
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+<!-------Daterangepicker scripts-->
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+
+</head>
+
+<body>
+<style>
+ul
+{
+width:100%;
+}
+ul li
+{
+margin-left:10%;
+}
+
+ul.multiselect-container.dropdown-menu
+{
+border:1px solid lightgrey;
+}
+</style>
+
+<div class="container">
+<center>
+
+<div class="row">
+<div  class="col-sm-12 col-md-12 col-lg-12">
+<h2>Hourly Traffic Comparison Report</h2>
+</div>
+</div>
+
+<div class="row">
+<nav class="navbar-default" style="background-color:#fff;">
+  <div class="container-fluid">
+    <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menubar1">
+	MENU
+	<span class="glyphicon glyphicon-menu-hamburger"></span>
+	</button>
+    </div>
+ 
+	<div class="collapse navbar-collapse"  id="menubar1" style="background-color:#fff;margin-left:5%;margin-right:5%;">
+      <ul class="nav navbar-nav" style="border:1px solid lightgrey;text-align:center" >
+
+	 <li> 
+	SELECT CHAIN<br>
+	<select id="category1" multiple="multiple"></select>
+	</li>
+	
+	 <li> 
+	SELECT SITE<br>
+	<select id="category2" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT ZONE<br>
+	<select id="category3" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT DATE<br>
+	      <input id="category4" type="text" name="daterange" value="Date" style="width:auto;margin-top:4px;"/> 
+	</li>
+</div>
+	  </ul>
+	</div>
+</nav>
+</div>
+
+
+<div class="row">
+	<div class="col-sm-12 col-md-12 col-lg-12">
+	<div class="table-responsive">	
+	<div class="btn-group">
+	  <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	  Export
+	  </button>
+	  <div class="dropdown-menu">
+		<li><a href="#" onclick="printData()">PRINT</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'csv',escape:'false'});"> CSV</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'excel',escape:'false'});"> XLS</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'png',escape:'false'});"> PNG</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'pdf',pdfFontSize:'7',escape:'false'});">PDF</a></li>
+	  </div>
+	</div>
+	
+	<div id="tablediv"></div>	
+	
+	</div>
+</div>
+
+</center>
+</div>
+
+
+</body>
+
+<script>
+
+$(document).ready(function()
+{
+
+	$('#category4').daterangepicker({
+        timePicker: true,
+        timePickerIncrement:1,
+		opens:'right',
+    	locale: {
+	    format: 'DD/MM/YYYY h:mm A'
+        }
+    });
+	
+	$("#category1").multiselect();
+	$("#category2").multiselect();
+	$("#category3").multiselect();
+	
+	$("#category1").append("<option value='--SELECT--'>--SELECT--</option>");
+	$("#category1").append("<option value='All'>All</option>");
+	$("#category1").multiselect('rebuild');
+	
+	jsondatafile="https://api.myjson.com/bins/1z57h";
+	
+	var continent=[];
+	var location=[];
+	var entrance=[];
+	var date1=[];
+	var oldcontinent='';
+	var oldlocation='';
+	var oldentrance='';
+	var olddate='';
+	j=0;
+	k=0;
+	l=0;
+	m=0;
+
+$.getJSON(jsondatafile, function(data) 
+{	
+	
+	for (i=0;i<data.length;i++)
+	{
+		if (data[i].chains != oldcontinent)
+		{
+			continent[j]=data[i].chains;
+			j=j+1;
+		}
+		oldcontinent=data[i].chains;
+
+		if (data[i].sites != oldlocation)
+		{
+			location[k]=data[k].sites;
+			k=k+1;
+		}
+		oldlocation=data[i].sites;
+		
+		if (data[i].zones != oldentrance)
+		{
+		entrance[l]=data[i].zones;
+		l=l+1;
+		}
+		oldentrance=data[i].zones;
+		
+		if (data[i].date != olddate)
+		{
+		date1[m]=data[i].date;
+		m=m+1;
+		}
+		olddate=data[i].date;
+	}
+	
+});	
+			
+	
+var table1;
+$.getJSON(jsondatafile, function (data) 
+	{	
+		var visitors=0;
+		var sales=0;
+		var transaction=0;
+		var itemssold=0;
+		var staff=0;
+		var conversion=0;
+		var avgsales=0;
+		var avgcustomervalue=0;
+		var avgbasketsize=0;
+		var custtostfrat=0;
+		var	itempercust=0;
+		var salperstaf=0;
+		for (i=0;i<data.length;i++)
+		{
+		visitors=visitors+parseInt(data[i].visitors);
+		sales=sales+parseFloat(data[i].sales);
+		transaction=transaction+parseInt(data[i].transaction);
+		itemssold=itemssold+parseInt(data[i].itemssold);
+		staff=staff+parseInt(data[i].staff);
+		conversion=conversion+parseFloat(data[i].conversion);
+		avgsales=avgsales+parseFloat(data[i].avgsales);
+		avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+		avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+		custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+		itemspercust=itempercust+parseInt(data[i].itempercust);
+		salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+		}
+		
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img width='80px' height='80px' src='logo.jpeg'/>Hourly Retail Comparision Report-"+Date();
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors<br>"+visitors+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales</span><br>"+sales+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>TRANSACTION<br>"+transaction+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold</span><br>"+itemssold+"</td></tr>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Staff</span><br>"+staff+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>CONVERSION<br>"+conversion.toFixed(2)+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'> Average Sales</span><br>"+avgsales.toFixed(2)+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;' >Average Customer Value<br>"+avgcustomervalue.toFixed(2)+"</td></tr>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Average Basket Size<br>"+avgbasketsize+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'> Customer to Staff Ratio</span><br>"+custtostfrat+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Per Customer<br>"+itemspercust+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales per Staff</span><br>"+salperstaf.toFixed(2)+"</td></tr>";
+		table1=table1+"</table>";
+		
+		$(".container").find("#tablediv").append(table1);
+		for (j=0;j<continent.length;j++)
+			{
+					if (continent[j].indexOf(" ")>0)
+					{
+					var continent1=continent[j].replace(' ','_');
+					$("#category1").append("<option value="+continent1+">"+continent1+"</option>");
+					}	
+					
+					if (continent[j].indexOf(" ")==-1)
+					{
+					$("#category1").append("<option value="+continent[j]+">"+continent[j]+"</option>");
+					}
+					
+			}
+	$('#category1').multiselect('rebuild');
+});
+
+
+	$("#category1").change(function()
+	{
+		category1=$("#category1").val();
+		$("#category2").empty();
+		$("#category2").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category2").multiselect('rebuild');
+		
+		if (category1=="All")
+		{
+		var visitors=0;
+		var sales=0;
+		var transaction=0;
+		var itemssold=0;
+		var staff=0;
+		var conversion=0;
+		var avgsales=0;
+		var avgcustomervalue=0;
+		var avgbasketsize=0;
+		var custtostfrat=0;
+		var	itempercust=0;
+		var salperstaf=0;
+		var sitename1= new Array();
+		
+		$.getJSON(jsondatafile, function (data) 
+		{
+		for (i=0;i<data.length;i++)
+		{
+					if (data[i].sites.indexOf("_")>0)
+					{
+					var sitename=data[i].sites.replace("_"," ");
+					}
+					
+					if (data[i].sites.indexOf("_")==-1)
+					{
+					var sitename=data[i].sites;
+					}
+					
+		if ($.inArray(sitename1,sitename))
+			{
+		$("#category2").append("<option value="+sitename+">"+sitename+"</option>");
+			}
+		$("#category2").multiselect('rebuild');
+					
+		visitors=visitors+parseInt(data[i].visitors);
+		sales=sales+parseFloat(data[i].sales);
+		transaction=transaction+parseInt(data[i].transaction);
+		itemssold=itemssold+parseInt(data[i].itemssold);
+		staff=staff+parseInt(data[i].staff);
+		conversion=conversion+parseFloat(data[i].conversion);
+		avgsales=avgsales+parseFloat(data[i].avgsales);
+		avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+		avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+		custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+		itemspercust=itempercust+parseInt(data[i].itempercust);
+		salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+		}
+		
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img width='80px' height='80px' src='logo.jpeg'/>Hourly Retail Comparision Report</caption>"+Date();
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors<br>"+visitors+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales</span><br>"+sales+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>TRANSACTION<br>"+transaction+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold</span><br>"+itemssold+"</td></tr>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Staff</span><br>"+staff+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>CONVERSION<br>"+conversion.toFixed(2)+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'> Average Sales</span><br>"+avgsales.toFixed(2)+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;' >Average Customer Value<br>"+avgcustomervalue.toFixed(2)+"</td></tr>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Average Basket Size<br>"+avgbasketsize+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'> Customer to Staff Ratio</span><br>"+custtostfrat+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Per Customer<br>"+itemspercust+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'>Sales per Staff</span><br>"+salperstaf.toFixed(2)+"</td></tr>";
+		table1=table1+"</table>";
+
+		$(".container").find("#tablediv").empty();
+		$(".container").find("#tablediv").append(table1);
+		});
+		}
+		
+		
+		if (category1[0]!="All" && category1[1]!="")
+		{
+			$.getJSON(jsondatafile,function (data) 
+			{
+			var visitors=0;
+			var sales=0;
+			var transaction=0;
+			var itemssold=0;
+			var staff=0;
+			var conversion=0;
+			var avgsales=0;
+			var avgcustomervalue=0;
+			var avgbasketsize=0;
+			var custtostfrat=0;
+			var	itempercust=0;
+			var salperstaf=0;
+			var sitename1=new Array();
+			
+			for (j=0;j<category1.length;j++)
+			{	
+					if (category1[j].indexOf("_")>0)
+					{
+					var chainname=category1[j].replace("_"," ");
+					}
+					if (category1[j].indexOf("_")==-1)
+					{
+					var chainname=category1[j];
+					}
+			
+				for (i=0;i<data.length;i++)
+				{
+					if (data[i].chains==chainname)	
+					{
+					visitors=visitors+parseInt(data[i].visitors);
+					sales=sales+parseFloat(data[i].sales);
+					transaction=transaction+parseInt(data[i].transaction);
+					itemssold=itemssold+parseInt(data[i].itemssold);
+					staff=staff+parseInt(data[i].staff);
+					conversion=conversion+parseFloat(data[i].conversion);
+					avgsales=avgsales+parseFloat(data[i].avgsales);
+					avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+					avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+					custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+					itemspercust=itempercust+parseInt(data[i].itempercust);
+					salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+
+					if (data[i].sites.indexOf(" ")>0)
+					{
+					var sitename=data[i].sites.replace(" ","_");
+					}
+					if (data[i].sites.indexOf(" ")==-1)
+					{
+					var sitename=data[i].sites;
+					}
+				
+
+					if ($.inArray(sitename,sitename1)==-1)
+					{
+					sitename1.push(sitename);
+					$("#category2").append("<option value="+sitename+">"+sitename+"</option>");
+					}
+				
+					$("#category2").multiselect('rebuild');
+					}	
+				}
+			}
+			
+				table1="<table width='100%;' border=8  id='trendanalysistable'>";
+				table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg' width='80px' height='80px'/>Hourly Retail Comparision Report</caption>"+Date();
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors<br>"+visitors+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales</span><br>"+sales+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>TRANSACTION<br>"+transaction+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold</span><br>"+itemssold+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Staff</span><br>"+staff+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>CONVERSION<br>"+conversion.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'> Average Sales</span><br>"+avgsales.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;' >Average Customer Value<br>"+avgcustomervalue.toFixed(2)+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Average Basket Size<br>"+avgbasketsize+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'> Customer to Staff Ratio</span><br>"+custtostfrat+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Per Customer<br>"+itemspercust+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'>Sales per Staff</span><br>"+salperstaf.toFixed(2)+"</td></tr>";
+				table1=table1+"</table>";
+				$(".container").find("#tablediv").empty();
+				$(".container").find("#tablediv").append(table1);
+			
+			
+			});
+		}
+});
+	
+	
+	
+		$("#category2").change(function()
+		{
+		category2=$("#category2").val();
+		$("#category3").empty();
+		$("#category3").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category3").multiselect('rebuild');
+			
+			
+			$.getJSON(jsondatafile,function (data) 
+			{
+				var visitors=0;
+				var sales=0;
+				var transaction=0;
+				var itemssold=0;
+				var staff=0;
+				var conversion=0;
+				var avgsales=0;
+				var avgcustomervalue=0;
+				var avgbasketsize=0;
+				var custtostfrat=0;
+				var	itempercust=0;
+				var salperstaf=0;
+				var zones1=new Array();	
+				
+			for (j=0;j<category2.length;j++)
+			{
+					if (category2[j].indexOf("_")>0)
+					{
+					var sitename=category2[j].replace("_"," ");
+					}
+					
+					if (category2[j].indexOf("_")==-1)
+					{
+					var sitename=category2[j];
+					}
+					
+				
+				for (i=0;i<data.length;i++)
+					{	
+					if (data[i].sites==sitename)	
+					{
+					visitors=visitors+parseInt(data[i].visitors);
+					sales=sales+parseFloat(data[i].sales);
+					transaction=transaction+parseInt(data[i].transaction);
+					itemssold=itemssold+parseInt(data[i].itemssold);
+					staff=staff+parseInt(data[i].staff);
+					conversion=conversion+parseFloat(data[i].conversion);
+					avgsales=avgsales+parseFloat(data[i].avgsales);
+					avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+					avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+					custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+					itemspercust=itempercust+parseInt(data[i].itempercust);
+					salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+					if (data[i].zones.indexOf(" ")>0)
+					{
+					var zonename=data[i].zones.replace(" ","_");
+					}
+					if (data[i].zones.indexOf(" ")==-1)
+					{
+					var zonename=data[i].zones;
+					}
+				
+					if ($.inArray(zonename,zones1)==-1)
+					{
+					zones1.push(zonename);
+					$("#category3").append("<option value="+zonename+">"+zonename+"</option>");
+					}
+				
+					$("#category3").multiselect('rebuild');
+					}
+				}
+			}
+				
+				table1="<table width='100%;' border=8  id='trendanalysistable'>";
+				table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report</caption>"+Date();
+				table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report</caption>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors<br>"+visitors+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales</span><br>"+sales+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>TRANSACTION<br>"+transaction+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold</span><br>"+itemssold+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Staff</span><br>"+staff+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>CONVERSION<br>"+conversion.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'> Average Sales</span><br>"+avgsales.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;' >Average Customer Value<br>"+avgcustomervalue.toFixed(2)+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Average Basket Size<br>"+avgbasketsize+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'> Customer to Staff Ratio</span><br>"+custtostfrat+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Per Customer<br>"+itemspercust+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'>Sales per Staff</span><br>"+salperstaf.toFixed(2)+"</td></tr>";
+				table1=table1+"</table>";
+				$(".container").find("#tablediv").empty();
+				$(".container").find("#tablediv").append(table1);
+			});
+	});
+	
+
+
+$("#category3").change(function()
+	{
+		category2=$("#category2").val();
+		category3=$("#category3").val();
+		$("#category4").empty();
+		$("#category4").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category4").multiselect('rebuild');
+			
+			$.getJSON(jsondatafile,function(data) 
+			{
+				var visitors=0;
+				var sales=0;
+				var transaction=0;
+				var itemssold=0;
+				var staff=0;
+				var conversion=0;
+				var avgsales=0;
+				var avgcustomervalue=0;
+				var avgbasketsize=0;
+				var custtostfrat=0;
+				var	itempercust=0;
+				var salperstaf=0;
+			
+	for (m=0;m<category2.length;m++)
+	{	
+	
+			for (j=0;j<category3.length;j++)
+			{	
+					if (category2[m].indexOf("_")>0)
+					{
+					var sitename=category2[m].replace("_"," ");
+					}
+					
+					if (category2[m].indexOf("_")==-1)
+					{
+					var sitename=category2[m];
+					}
+					
+					if (category3[j].indexOf("_")>0)
+					{
+					var zonename=category3[j].replace("_"," ");
+					}
+					
+					if (category3[j].indexOf("_")==-1)
+					{
+					var zonename=category3[j];
+					}
+					
+				for (i=0;i<data.length;i++)
+				{
+					if (data[i].zones==zonename && data[i].sites==sitename)	
+					{
+					visitors=visitors+parseInt(data[i].visitors);
+					sales=sales+parseFloat(data[i].sales);
+					transaction=transaction+parseInt(data[i].transaction);
+					itemssold=itemssold+parseInt(data[i].itemssold);
+					staff=staff+parseInt(data[i].staff);
+					conversion=conversion+parseFloat(data[i].conversion);
+					avgsales=avgsales+parseFloat(data[i].avgsales);
+					avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+					avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+					custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+					itemspercust=itempercust+parseInt(data[i].itempercust);
+					salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+					
+					$("#category4").append("<option value="+data[i].date+">"+data[i].date+"</option>");
+					$("#category4").multiselect('rebuild');
+					}
+				}
+			}
+		}
+				table1="<table width='100%;' border=8  id='trendanalysistable'>";
+				table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report</caption>"+Date();
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors<br>"+visitors+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales</span><br>"+sales+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>TRANSACTION<br>"+transaction+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold</span><br>"+itemssold+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Staff</span><br>"+staff+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>CONVERSION<br>"+conversion.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'> Average Sales</span><br>"+avgsales.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;' >Average Customer Value<br>"+avgcustomervalue.toFixed(2)+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Average Basket Size<br>"+avgbasketsize+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'> Customer to Staff Ratio</span><br>"+custtostfrat+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Per Customer<br>"+itemspercust+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'>Sales per Staff</span><br>"+salperstaf+"</td></tr>";
+				table1=table1+"</table>";
+				$(".container").find("#tablediv").empty();
+				$(".container").find("#tablediv").append(table1);
+			
+			});
+	});
+	
+	
+
+	$("#category4").change(function()
+	{
+		var category4=$("#category4").val();
+		
+		var datetimeno=category4.search("-");
+		var datefrom=category4.substr(0,datetimeno);
+		var dateto=category4.substr(datetimeno+2);
+		
+		var dayfrom1=datefrom.substr(0,2);
+		var monthfrom1=datefrom.substr(3,2);
+		var yearfrom1=datefrom.substr(6,4);
+		var timefrom1=datefrom.substr(11);
+		
+		var datefrom3=monthfrom1+"/"+dayfrom1+"/"+yearfrom1+" "+timefrom1;
+		datefrom2=new Date(datefrom3);
+				
+		var dayto1=dateto.substr(0,2);
+		var monthto1=dateto.substr(3,2);
+		var yearto1=dateto.substr(6,4);
+		var timeto1=dateto.substr(11);
+		
+		var dateto3=monthto1+"/"+dayto1+"/"+yearto1 +" "+timeto1;
+		dateto2=new Date(dateto3);
+
+		$.getJSON(jsondatafile,function (data) 
+		{
+				var visitors=0;
+				var sales=0;
+				var transaction=0;
+				var itemssold=0;
+				var staff=0;
+				var conversion=0;
+				var avgsales=0;
+				var avgcustomervalue=0;
+				var avgbasketsize=0;
+				var custtostfrat=0;
+				var	itempercust=0;
+				var salperstaf=0;
+				var datafortable1=new Array();
+				var datatable1;
+			
+			for (i=0;i<data.length;i++)
+				{
+					var date2=data[i].date.split('.').join('');
+					var date1=new Date(date2);
+					
+					if ((date1>=datefrom2) && (date1<=dateto2))	
+					{
+					visitors=visitors+parseInt(data[i].visitors);
+					sales=sales+parseFloat(data[i].sales);
+					transaction=transaction+parseInt(data[i].transaction);
+					itemssold=itemssold+parseInt(data[i].itemssold);
+					staff=staff+parseInt(data[i].staff);
+					conversion=conversion+parseFloat(data[i].conversion);
+					avgsales=avgsales+parseFloat(data[i].avgsales);
+					avgcustomervalue=avgcustomervalue+parseFloat(data[i].avgcustomervalue);
+					avgbasketsize=avgbasketsize+parseInt(data[i].avgbasketsize);
+					custtostfrat=custtostfrat+parseInt(data[i].custtostfrat);
+					itemspercust=itempercust+parseInt(data[i].itempercust);
+					salperstaf=salperstaf+parseFloat(data[i].salperstaf);
+					}
+				}
+				
+				table1="<table width='100%;' border=8  id='trendanalysistable'>";
+				table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report</caption>"+Date();
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors<br>"+visitors+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales</span><br>"+sales+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>TRANSACTION<br>"+transaction+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold</span><br>"+itemssold+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Staff</span><br>"+staff+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>CONVERSION<br>"+conversion.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'> Average Sales</span><br>"+avgsales.toFixed(2)+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;' >Average Customer Value<br>"+avgcustomervalue.toFixed(2)+"</td></tr>";
+				table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Average Basket Size<br>"+avgbasketsize+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'> Customer to Staff Ratio</span><br>"+custtostfrat+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Per Customer<br>"+itemspercust+"</td>";
+				table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'> <span style='color:#ff9933;'>Sales per Staff</span><br>"+salperstaf.toFixed(2)+"</td></tr>";
+				table1=table1+"</table>";
+				$(".container").find("#tablediv").empty();
+				$(".container").find("#tablediv").append(table1);
+	});
+});	
+
+		
+});<!----DOCUMENT.READY--->
+		
+function printData()
+{
+   var divToPrint=document.getElementById("trendanalysistable");
+   newWin= window.open("");
+   newWin.document.write(divToPrint.outerHTML);
+   newWin.print();
+   newWin.close();
+}
+
+</script>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"> 
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-------jquery and bootstrap scripts-->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<!-------dynatable  scripts-->
+<link rel="stylesheet" media="all" href="dynatable/jquery.dynatable.css">
+<script type="text/javascript" src="dynatable/jquery.dynatable.js"></script>
+
+<!-------tableexport scripts-->
+<script type="text/javascript" src="tableexport/tableExport.js"></script>
+<script type="text/javascript" src="tableexport/jquery.base64.js"></script>
+<script type="text/javascript" src="tableexport/html2canvas.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/sprintf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/base64.js"></script>
+
+<!-------highcharts scripts-->
+<script src="Highcharts/js/highcharts.js"></script>
+<script src="Highcharts/js/modules/exporting.js"></script>
+<script src="Highcharts/js/modules/canvas-tools.js"></script>
+<script src="Highcharts/js/modules/export-csv.js"></script>
+<script src="Highcharts/js/modules/jspdf.min.js"></script>
+<script src="Highcharts/js/highcharts-export-clientside.js"></script>
+
+<!-------Multiple select with checkboxes  scripts-->
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+<!-------Daterangepicker scripts-->
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+</head>
+
+<body>
+
+<script>
+$(document).ready(function(){
+		$('#export').on('click', function() {		
+			html2canvas(document.body, {
+				onrendered: function(canvas) {
+					document.body.appendChild(canvas);
+				},
+			});
+		});
+});
+
+
+</script>
+
+<input type="button" id="export">
+
+
+</body>
+
+</html>

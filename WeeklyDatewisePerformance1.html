@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8"> 
+<head>
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-------jquery and bootstrap scripts-->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<!-------dynatable  scripts-->
+<link rel="stylesheet" media="all" href="dynatable/jquery.dynatable.css">
+<script type="text/javascript" src="dynatable/jquery.dynatable.js"></script>
+
+<!-------tableexport scripts-->
+<script type="text/javascript" src="tableexport/tableExport.js"></script>
+<script type="text/javascript" src="tableexport/jquery.base64.js"></script>
+<!----
+<script type="text/javascript" src="tableexport/html2canvas.js"></script>
+-->
+<script type="text/javascript" src="tableexport/jspdf/libs/sprintf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/base64.js"></script>
+
+<!-------highcharts scripts-->
+<script src="Highcharts/js/highcharts.js"></script>
+<script src="Highcharts/js/modules/exporting.js"></script>
+<!-- <script src="Highcharts/js/modules/canvas-tools.js"></script>-->
+<script src="Highcharts/js/modules/export-csv.js"></script>
+<script src="Highcharts/js/modules/jspdf.min.js"></script>
+<script src="Highcharts/js/highcharts-export-clientside.js"></script>
+
+<!-------Multiple select with checkboxes  scripts-->
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+<!-------Daterangepicker scripts-->
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+
+</head>
+
+<body>
+
+<div class="container">
+<div class="se-pre-con"></div>
+<center>
+<div class="row">
+<div  class="col-sm-12 col-md-12 col-lg-12">
+<h2>Weekly Datewise Performance Report</h2>
+</div>
+</div>
+</center>
+
+
+<div class="row">
+<nav class="navbar-default" >
+  <div class="container-fluid">
+    <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menubar1">
+	MENU
+	<span class="glyphicon glyphicon-menu-hamburger"></span>
+	</button>
+    </div>
+ 
+	<div class="collapse navbar-collapse"  id="menubar1" style="margin-left:15%;margin-right:15%;">
+      <ul class="nav navbar-nav" style="border:1px solid lightgrey;text-align:center" >
+
+	 <li> 
+	SELECT CHAIN<br>
+	<select id="category1" multiple="multiple">
+	<option value='All'>All</option></select>	
+	</li>
+	
+	 <li> 
+	SELECT SITE<br>
+	<select id="category2" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT ZONE<br>
+	<select id="category3" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT DATE<br>
+	<button id="dorpdown1" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">None Selected<span class="caret"></span></button>
+		  <ul class="dropdown-menu">
+	      <input id="category4" type="text" name="daterange" value="Date" style="width:150px"/> 
+		  </ul>
+	</li>
+</div>
+	  </ul>
+	</div>
+</nav>
+</div>
+
+
+
+
+
+
+
+
+<div class="row" class="col-sm-12 col-md-12 col-lg-12" >
+<div id="tablediv">
+	
+</div>
+</div>
+
+</div>
+
+<script>
+$(window).load(function()
+{
+	$(".se-pre-con").fadeOut("slow");
+});
+
+$(document).ready(function()
+{
+	$('#category4').daterangepicker({
+        timePicker: true,
+        timePickerIncrement:1,
+		opens:'right',
+    	locale: {
+	    format: 'DD/MM/YYYY h:mm A'
+        }
+    });
+
+	
+ $("#category1").multiselect();
+ $("#category2").multiselect();
+ $("#category3").multiselect();
+ 
+ jsondatafile="jsondata.json";
+ 
+ $.getJSON(jsondatafile,function (data) 
+	{
+	var continent=new Array();
+	var location=new Array();
+	var entrance=new Array();
+	var oldcontinent='';
+	var oldlocation='';
+	var oldentrance='';
+	j=0;
+	k=0;
+	l=0;
+	m=0;
+		var datenew='';
+		var datenew2='';
+		var datedata=new Array();
+       
+	for (i=0;i<data.length;i++)
+	{
+		if (data[i]["chains"] != oldcontinent)
+		{
+			continent[j]=data[i]["chains"];
+			j=j+1;
+		}
+		oldcontinent=data[i]["chains"];
+
+		if (data[i]["sites"] != oldlocation)
+		{
+			location[k]=data[k]["sites"];
+			k=k+1;
+		}
+		oldlocation=data[i]["sites"];
+		
+		if (data[i]["zones"] != oldentrance)
+		{
+		entrance[l]=data[i]["zones"];
+		l=l+1;
+		}
+		oldentrance=data[i]["zones"];
+	
+		datenew=data[i].date.replace("."," ");
+		datenew2=moment(datenew);
+		datedata.push(datenew2);
+	}
+		
+		var datemin1=moment.min(datedata);
+		var datemax1=moment.max(datedata);
+		
+			var tabledates1=new Array();
+			var datafortable1=new Array();
+			
+			for (i=0;i<data.length;i++)
+				{
+					var date2=data[i].date.replace("."," ");
+					var date1=new Date(date2);
+					if ($.inArray(date1,tabledates1)==-1)
+					{
+					tabledates1.push((date1.getDay()+1)+"-"+(parseInt(date1.getMonth())+1)+"-"+date1.getFullYear());
+					}
+				}
+				
+			
+			for (i=0;i<data.length;i++)
+				{	
+				var datatable1='';
+			
+				var zonename=data[i]["zones"];
+				datatable1=datatable1+'{"mallentrance":"'+data[i]["zones"]+'"';
+				
+				for (j=0;tabledates1.length;j++)
+				{
+					var datecompare=new Date(data[i].date.replace("."," "));
+					var datecompare1=(datecompare.getDay()+1)+"-"+(parseInt(datecompare.getMonth())+1)+"-"+datecompare.getFullYear();
+					if (tabledates1[j]==datecompare1 && zonename==data[i]["zones"])
+					{
+					datatable1=datatable1+',"'+tabledates1[j]+'":"'+data[i]["visitors"]+'"';
+					}
+					
+					if (tabledates1[j]!==datecompare1)  
+					{
+					datatable1=datatable1+',"'+tabledates1[j]+'":"0"';
+				}  
+						
+				}
+				datatable1=datatable1+'}';
+				
+				}
+				
+				
+			
+			
+				var tableprepare1="<table id='table1'><thead><th>mallentrance</th>";
+				for (j=0;tabledates1.length;j++)
+				{
+				tableprepare1=tableprepare1+"<th>"+tabledates1[j]+"</th>";
+				}
+				tableprepare1=tableprepare1+"</thead><tbody></tbody></table>";
+				$("#tablediv").append(tableprepare1);
+				
+				showtable(datafortable1);
+	
+				for (j=0;j<continent.length;j++)
+				{
+					
+					if (continent[j].indexOf(" ")>0)
+					{
+					var continent1=continent[j].split(' ').join('_');
+					$("#category1").append("<option value="+continent1+">"+continent1+"</option>");
+					}	
+					if (continent[j].indexOf(" ")==-1)
+					{
+					$("#category1").append("<option value="+continent[j]+">"+continent[j]+"</option>");
+					}
+				}
+				$('#category1').multiselect('rebuild');
+
+		
+});
+});
+	
+		function showtable(datafortable1)
+		{
+		$("#table1").dynatable({
+		  dataset:{records:datafortable1}
+		});
+		}	
+
+
+
+</script>
+
+
+</body>
+</center>
+</html>

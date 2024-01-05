@@ -1,0 +1,20 @@
+<html>
+<head>
+
+<script src="jsfiles/jquery-1.11.3.min.js"></script>
+<meta charset="UTF-8">
+</head>
+<body>
+<script>
+$(document).ready(function() {
+    $.ajax({
+        type: "GET",
+        url: "data.csv",
+        dataType: "text",
+        success: function(data) {alert(data);}
+     });
+});
+
+</script>
+</body>
+</html>

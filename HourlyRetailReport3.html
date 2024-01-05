@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8"> 
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-------jquery and bootstrap scripts-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+
+<!-------dynatable  scripts-->
+<link rel="stylesheet" media="all" href="dynatable/jquery.dynatable.css">
+<script type="text/javascript" src="dynatable/jquery.dynatable.js"></script>
+
+<!-------tableexport scripts-->
+
+
+<script type="text/javascript" src="tableexport/tableExport.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/base64.js"></script>
+<script type="text/javascript" src="tableexport/html2canvas.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/libs/sprintf.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.min.js"></script>
+<script type="text/javascript" src="tableexport/jspdf/jspdf.js"></script>
+
+
+<!-------highcharts scripts-->
+<script src="Highcharts/js/highcharts.js"></script>
+<script src="Highcharts/js/modules/exporting.js"></script>
+<script src="Highcharts/js/modules/canvas-tools.js"></script>
+<script src="Highcharts/js/modules/export-csv.js"></script>
+<script src="Highcharts/js/modules/jspdf.min.js"></script>
+<script src="Highcharts/js/highcharts-export-clientside.js"></script>
+
+<!-------Multiple select with checkboxes  scripts-->
+<link rel="stylesheet" href="selectmultiple/bootstrap.multiple.css">
+<script type="text/javascript" src="selectmultiple/bootstrap.multiselect.js"></script>
+
+<!-------Daterangepicker scripts-->
+<script type="text/javascript" src="daterangepicker/moment.min.js"></script>
+<script type="text/javascript" src="daterangepicker/daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker/daterangepicker.css" />
+
+</head>
+
+<body>
+<style>
+ul
+{
+width:100%;
+}
+
+ul li
+{
+margin-left:10%;
+}
+
+ul.multiselect-container.dropdown-menu
+{
+border:1px solid lightgrey;
+}
+</style>
+<div class="container">
+<center>
+<div class="row">
+<div  class=".col-xs-12 col-sm-12 col-md-12 col-lg-12">
+<h2> Daily Trend analysis </h2>
+</div>
+</div>
+<div class="row">
+<nav class="navbar-default" style="background-color:#fff;">
+  <div class="container-fluid">
+    <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#menubar1">
+	MENU
+	<span class="glyphicon glyphicon-menu-hamburger"></span>
+	</button>
+    </div>
+ 
+	<div class="collapse navbar-collapse"  id="menubar1" style="margin-left:5%;margin-right:5%;">
+      <ul class="nav navbar-nav" style="border:1px solid lightgrey;text-align:center" >
+
+	 <li> 
+	SELECT CHAIN<br>
+	<select id="category1" multiple="multiple"></select>	
+	</li>
+	
+	 <li> 
+	SELECT SITE<br>
+	<select id="category2" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT ZONE<br>
+	<select id="category3" multiple="multiple"><option value='--'>--</option></select>	
+	</li>
+	
+	<li>
+	SELECT DATE<br>
+	      <input id="category4" type="text" name="daterange" value="Date" style="width:auto;margin-top:4px;"/> 
+	</li>
+</div>
+	  </ul>
+	</div>
+</nav>
+</div>
+
+<div class="row">
+	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+		<div class="table-responsive">	
+		<div class="btn-group">
+	  
+	  <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	  Export
+	  </button>
+	  
+	  <div class="dropdown-menu">
+		<li><a href="#" onclick="printData()">PRINT</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'csv',escape:'false'});"> CSV</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'excel',escape:'false'});"> XLS</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'png',escape:'false'});"> PNG</a></li>
+		<li><a href="#" onclick="$('#trendanalysistable').tableExport({type:'pdf',pdfFontSize:'7',escape:'false'});">PDF</a></li>
+	  </div>
+	  
+	</div>
+	
+			<div id="tablediv"></div>	
+		</div>
+	</div>	
+</div>
+
+</center>
+</div>
+
+
+</body>
+
+<script>
+
+$(document).ready(function()
+{
+	
+	$('#category4').daterangepicker({
+        timePicker: true,
+        timePickerIncrement:1,
+		opens:'right',
+    	locale: {
+	    format: 'DD/MM/YYYY h:mm A'
+        }
+    });
+	
+	
+	$("#category1").multiselect();
+	$("#category2").multiselect();
+	$("#category3").multiselect();
+	
+	$("#category1").append("<option value='--SELECT--'>--SELECT--</option>");
+	$("#category1").append("<option value='All'>All</option>");
+	$("#category1").multiselect('rebuild');
+
+	jsondatafile="https://api.myjson.com/bins/1z57h";
+	
+
+	var continent=[];
+	var location=[];
+	var entrance=[];
+	var date1=[];
+	var oldcontinent='';
+	var oldlocation='';
+	var oldentrance='';
+	var olddate='';
+	j=0;
+	k=0;
+	l=0;
+	m=0;
+
+$.getJSON(jsondatafile, function(data) 
+{	
+	
+	for (i=0;i<data.length;i++)
+	{
+		if (data[i].chains != oldcontinent)
+		{
+			continent[j]=data[i].chains;
+			j=j+1;
+		}
+		oldcontinent=data[i].chains;
+
+		if (data[i].sites != oldlocation)
+		{
+			location[k]=data[k].sites;
+			k=k+1;
+		}
+		oldlocation=data[i].sites;
+		
+		if (data[i].zones != oldentrance)
+		{
+		entrance[l]=data[i].zones;
+		l=l+1;
+		}
+		oldentrance=data[i].zones;
+	}
+	
+});	
+			
+	
+var table1;
+$.getJSON(jsondatafile, function (data) 
+	{	
+		var visitorscurrday=0;
+		var visitorspastday=0;
+		var visitorspastdayper1=0;
+		var visitorspastweek=0;
+		var visitorspastweekper1=0;
+		var visitorspastmonth=0;
+		var visitorspastmonthper1=0;
+		var visitorspastyear=0;
+		var visitorspastyearper1=0;
+		
+		var convcurrday=0;
+		var convpastday=0;
+		var convpastdayper1=0;
+		var convpastweek=0;
+		var convpastweekper1=0;
+		var convpastmonth=0;
+		var convpastmonthper1=0;	
+		var convpastyear=0;
+		var convpastyearper1=0;
+	
+		var transcurrday=0;
+		var transpastday=0;
+		var transpastdayper1=0;
+		var transpastweek=0;
+		var transpastweekper1=0;
+		var transpastmonth=0;
+		var transpastmonthper1=0;
+		var transpastyear=0;
+		var transpastyearper1=0;
+		
+		var salescurrday=0;
+		var salespastday=0;
+		var salespastdayper1=0;
+		var salespastweek=0;
+		var salespastweekper1=0;
+		var salespastmonth=0;
+		var salespastmonthper1=0;
+		var salespastyear=0;
+		var salespastyearper1=0;
+		
+		var itsoldcurrday=0;
+		var itsoldpastday=0;
+		var itsoldpastdayper1=0;
+		var itsoldpastweek=0;
+		var itsoldpastweekper1=0;
+		var itsoldpastmonth=0;
+		var itsoldpastmonthper1=0;
+		var itsoldpastyear=0;
+		var itsoldpastyearper1=0;
+		
+		
+		for (i=0;i<data.length;i++)
+		{
+		visitorscurrday=visitorscurrday+parseInt(data[i].visitorscurrday);
+		visitorspastday=visitorspastday+parseInt(data[i].visitorspastday);
+		visitorspastdayper1=(visitorscurrday-visitorspastday)/visitorscurrday*100;
+		visitorspastweek=visitorspastweek+parseInt(data[i].visitorspastweek);
+		visitorspastweekper1=(visitorscurrday-visitorspastweek)/visitorscurrday*100;
+		visitorspastmonth=visitorspastmonth+parseInt(data[i].visitorspastmonth);
+		visitorspastmonthper1=(visitorscurrday-visitorspastmonth)/visitorscurrday*100;
+		visitorspastyear=visitorspastyear+parseInt(data[i].visitorspastyear);
+		visitorspastyearper1=(visitorscurrday-visitorspastyear)/visitorscurrday*100;
+		
+		
+		convcurrday=convcurrday+parseFloat(data[i].convcurrday);
+		convpastday=convpastday+parseFloat(data[i].convpastday);
+		convpastdayper1=(convcurrday-convpastday)/convcurrday*100;
+		convpastweek=convpastweek+parseFloat(data[i].convpastweek);
+		convpastweekper1=(convcurrday-convpastweek)/convcurrday*100;
+		convpastmonth=convpastmonth+parseFloat(data[i].convpastmonth);
+		convpastmonthper1=(convcurrday-convpastmonth)/convcurrday*100;
+		convpastyear=convpastyear+parseFloat(data[i].convpastyear);
+		convpastyearper1=(convcurrday-convpastyear)/convcurrday*100;
+		
+		
+		transcurrday=transcurrday+parseInt(data[i].transcurrday);
+		transpastday=transpastday+parseInt(data[i].transpastday);
+		transpastdayper1=(transcurrday-transpastday)/transcurrday*100;
+		transpastweek=transpastweek+parseInt(data[i].transpastweek);
+		transpastweekper1=(transcurrday-transpastweek)/transcurrday*100;
+		transpastmonth=transpastmonth+parseInt(data[i].transpastmonth);
+		transpastmonthper1=(transcurrday-transpastmonth)/transcurrday*100;
+		transpastyear=transpastyear+parseInt(data[i].transpastyear);
+		transpastyearper1=(transcurrday-transpastyear)/transcurrday*100;
+		
+		
+		salescurrday=salescurrday+parseInt(data[i].salescurrday);
+		salespastday=salespastday+parseInt(data[i].salespastday);
+		salespastdayper1=(salescurrday-salespastday)/salescurrday*100;
+		salespastweek=salespastweek+parseInt(data[i].salespastweek);
+		salespastweekper1=(salescurrday-salespastweek)/salescurrday*100;
+		salespastmonth=salespastmonth+parseInt(data[i].salespastmonth);
+		salespastmonthper1=(salescurrday-salespastmonth)/salescurrday*100;
+		salespastyear=salespastyear+parseInt(data[i].salespastyear);
+		salespastyearper1=(salescurrday-salespastyear)/salescurrday*100;
+		
+		itsoldcurrday=itsoldcurrday+parseInt(data[i].itsoldcurrday);
+		itsoldpastday=itsoldpastday+parseInt(data[i].itsoldpastday);
+		itsoldpastdayper1=(itsoldcurrday-itsoldpastday)/itsoldcurrday*100;
+		itsoldpastweek=itsoldpastweek+parseInt(data[i].itsoldpastweek);
+		itsoldpastweekper1=(itsoldcurrday-itsoldpastweek)/itsoldcurrday*100;
+		itsoldpastmonth=itsoldpastmonth+parseInt(data[i].itsoldpastmonth);
+		itsoldpastmonthper1=(itsoldcurrday-itsoldpastmonth)/itsoldcurrday*100;
+		itsoldpastyear=itsoldpastyear+parseInt(data[i].itsoldpastyear);
+		itsoldpastyearper1=(itsoldcurrday-itsoldpastyear)/itsoldcurrday*100;
+		
+		}
+		
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report"+Date()+"</caption>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors Current Day<br>"+visitorscurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Day</span><br>"+visitorspastday+"<br>"+visitorspastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Week</span><br>"+visitorspastweek+"<br>"+visitorspastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Month</span><br>"+visitorspastmonth+"<br>"+visitorspastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Year</span><br>"+visitorspastyear+"<br>"+visitorspastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Conversion Current Day<br>"+convcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Day</span><br>"+convpastday.toFixed(2)+"<br>"+convpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Week</span><br>"+convpastweek.toFixed(2)+"<br>"+convpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Month</span><br>"+convpastmonth.toFixed(2)+"<br>"+convpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Year</span><br>"+convpastyear.toFixed(2)+"<br>"+convpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Transaction Current Day<br>"+transcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Day</span><br>"+transpastday+"<br>"+transpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Week</span><br>"+transpastweek+"<br>"+transpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Month</span><br>"+transpastmonth+"<br>"+transpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Year</span><br>"+transpastyear+"<br>"+transpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Sales Current Day<br>"+salescurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Day</span><br>"+salespastday+"<br>"+salespastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Week</span><br>"+salespastweek+"<br>"+salespastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Month</span><br>"+salespastmonth+"<br>"+salespastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Year</span><br>"+salespastyear+"<br>"+salespastyearper1.toFixed(2) +"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Sold Current Day<br>"+itsoldcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>items Sold Past Day</span><br>"+itsoldpastday+"<br>"+itsoldpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Week</span><br>"+itsoldpastweek+"<br>"+itsoldpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Month</span><br>"+itsoldpastmonth+"<br>"+itsoldpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Year</span><br>"+itsoldpastyear+"<br>"+itsoldpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"</table>";
+		
+		$(".container").find("#tablediv").append(table1);
+		for (j=0;j<continent.length;j++)
+			{
+					if (continent[j].indexOf(" ")>0)
+					{
+					var continent1=continent[j].replace(' ','_');
+					$("#category1").append("<option value="+continent1+">"+continent1+"</option>");
+					}	
+					
+					if (continent[j].indexOf(" ")==-1)
+					{
+					$("#category1").append("<option value="+continent[j]+">"+continent[j]+"</option>");
+					}
+					
+			}
+	$('#category1').multiselect('rebuild');
+});
+
+
+	$("#category1").change(function()
+	{
+		category1=$("#category1").val();
+		$("#category2").empty();
+		$("#category2").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category2").multiselect('rebuild');
+		
+		if (category1=="All")
+		{
+	
+var visitorscurrday=0;
+		var visitorspastday=0;
+		var visitorspastdayper1=0;
+		var visitorspastweek=0;
+		var visitorspastweekper1=0;
+		var visitorspastmonth=0;
+		var visitorspastmonthper1=0;
+		var visitorspastyear=0;
+		var visitorspastyearper1=0;
+		
+		var convcurrday=0;
+		var convpastday=0;
+		var convpastdayper1=0;
+		var convpastweek=0;
+		var convpastweekper1=0;
+		var convpastmonth=0;
+		var convpastmonthper1=0;	
+		var convpastyear=0;
+		var convpastyearper1=0;
+	
+		var transcurrday=0;
+		var transpastday=0;
+		var transpastdayper1=0;
+		var transpastweek=0;
+		var transpastweekper1=0;
+		var transpastmonth=0;
+		var transpastmonthper1=0;
+		var transpastyear=0;
+		var transpastyearper1=0;
+		
+		var salescurrday=0;
+		var salespastday=0;
+		var salespastdayper1=0;
+		var salespastweek=0;
+		var salespastweekper1=0;
+		var salespastmonth=0;
+		var salespastmonthper1=0;
+		var salespastyear=0;
+		var salespastyearper1=0;
+		
+		var itsoldcurrday=0;
+		var itsoldpastday=0;
+		var itsoldpastdayper1=0;
+		var itsoldpastweek=0;
+		var itsoldpastweekper1=0;
+		var itsoldpastmonth=0;
+		var itsoldpastmonthper1=0;
+		var itsoldpastyear=0;
+		var itsoldpastyearper1=0;
+		
+
+		$.getJSON(jsondatafile, function (data) 
+		{
+		for (i=0;i<data.length;i++)
+		{
+					if (data[i].sites.indexOf("_")>0)
+					{
+					var sitename=data[i].sites.replace("_"," ");
+					}
+					
+					if (data[i].sites.indexOf("_")==-1)
+					{
+					var sitename=data[i].sites;
+					}
+					
+		$("#category2").append("<option value="+sitename+">"+sitename+"</option>");
+		$("#category2").multiselect('rebuild');
+					
+		visitorscurrday=visitorscurrday+parseInt(data[i].visitorscurrday);
+		visitorspastday=visitorspastday+parseInt(data[i].visitorspastday);
+		visitorspastdayper1=(visitorscurrday-visitorspastday)/visitorscurrday*100;
+		visitorspastweek=visitorspastweek+parseInt(data[i].visitorspastweek);
+		visitorspastweekper1=(visitorscurrday-visitorspastweek)/visitorscurrday*100;
+		visitorspastmonth=visitorspastmonth+parseInt(data[i].visitorspastmonth);
+		visitorspastmonthper1=(visitorscurrday-visitorspastmonth)/visitorscurrday*100;
+		visitorspastyear=visitorspastyear+parseInt(data[i].visitorspastyear);
+		visitorspastyearper1=(visitorscurrday-visitorspastyear)/visitorscurrday*100;
+		
+		
+		convcurrday=convcurrday+parseFloat(data[i].convcurrday);
+		convpastday=convpastday+parseFloat(data[i].convpastday);
+		convpastdayper1=(convcurrday-convpastday)/convcurrday*100;
+		convpastweek=convpastweek+parseFloat(data[i].convpastweek);
+		convpastweekper1=(convcurrday-convpastweek)/convcurrday*100;
+		convpastmonth=convpastmonth+parseFloat(data[i].convpastmonth);
+		convpastmonthper1=(convcurrday-convpastmonth)/convcurrday*100;
+		convpastyear=convpastyear+parseFloat(data[i].convpastyear);
+		convpastyearper1=(convcurrday-convpastyear)/convcurrday*100;
+		
+		
+		transcurrday=transcurrday+parseInt(data[i].transcurrday);
+		transpastday=transpastday+parseInt(data[i].transpastday);
+		transpastdayper1=(transcurrday-transpastday)/transcurrday*100;
+		transpastweek=transpastweek+parseInt(data[i].transpastweek);
+		transpastweekper1=(transcurrday-transpastweek)/transcurrday*100;
+		transpastmonth=transpastmonth+parseInt(data[i].transpastmonth);
+		transpastmonthper1=(transcurrday-transpastmonth)/transcurrday*100;
+		transpastyear=transpastyear+parseInt(data[i].transpastyear);
+		transpastyearper1=(transcurrday-transpastyear)/transcurrday*100;
+		
+		
+		salescurrday=salescurrday+parseInt(data[i].salescurrday);
+		salespastday=salespastday+parseInt(data[i].salespastday);
+		salespastdayper1=(salescurrday-salespastday)/salescurrday*100;
+		salespastweek=salespastweek+parseInt(data[i].salespastweek);
+		salespastweekper1=(salescurrday-salespastweek)/salescurrday*100;
+		salespastmonth=salespastmonth+parseInt(data[i].salespastmonth);
+		salespastmonthper1=(salescurrday-salespastmonth)/salescurrday*100;
+		salespastyear=salespastyear+parseInt(data[i].salespastyear);
+		salespastyearper1=(salescurrday-salespastyear)/salescurrday*100;
+		
+		itsoldcurrday=itsoldcurrday+parseInt(data[i].itsoldcurrday);
+		itsoldpastday=itsoldpastday+parseInt(data[i].itsoldpastday);
+		itsoldpastdayper1=(itsoldcurrday-itsoldpastday)/itsoldcurrday*100;
+		itsoldpastweek=itsoldpastweek+parseInt(data[i].itsoldpastweek);
+		itsoldpastweekper1=(itsoldcurrday-itsoldpastweek)/itsoldcurrday*100;
+		itsoldpastmonth=itsoldpastmonth+parseInt(data[i].itsoldpastmonth);
+		itsoldpastmonthper1=(itsoldcurrday-itsoldpastmonth)/itsoldcurrday*100;
+		itsoldpastyear=itsoldpastyear+parseInt(data[i].itsoldpastyear);
+		itsoldpastyearper1=(itsoldcurrday-itsoldpastyear)/itsoldcurrday*100;
+		}
+		
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report"+Date()+"</caption>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors Current Day<br>"+visitorscurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Day</span><br>"+visitorspastday+"<br>"+visitorspastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Week</span><br>"+visitorspastweek+"<br>"+visitorspastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Month</span><br>"+visitorspastmonth+"<br>"+visitorspastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Year</span><br>"+visitorspastyear+"<br>"+visitorspastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Conversion Current Day<br>"+convcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Day</span><br>"+convpastday+"<br>"+convpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Week</span><br>"+convpastweek+"<br>"+convpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Month</span><br>"+convpastmonth.toFixed(2)+"<br>"+convpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Year</span><br>"+convpastyear.toFixed(2)+"<br>"+convpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Transaction Current Day<br>"+transcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Day</span><br>"+transpastday+"<br>"+transpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Week</span><br>"+transpastweek+"><br>"+transpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Month</span><br>"+transpastmonth+"<br>"+transpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Year</span><br>"+transpastyear+"<br>"+transpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Sales Current Day<br>"+salescurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Day</span><br>"+salespastday+"<br>"+salespastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Week</span><br>"+salespastweek+"<br>"+salespastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Month</span><br>"+salespastmonth+"<br>"+salespastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Year</span><br>"+salespastyear+"<br>"+salespastyearper1.toFixed(2) +"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Sold Current Day<br>"+itsoldcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>items Sold Past Day</span><br>"+itsoldpastday+"<br>"+itsoldpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Week</span><br>"+itsoldpastweek+"<br>"+itsoldpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Month</span><br>"+itsoldpastmonth+"<br>"+itsoldpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Year</span><br>"+itsoldpastyear+"<br>"+itsoldpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"</table>";
+
+		$(".container").find("#tablediv").empty();
+		$(".container").find("#tablediv").append(table1);
+		});
+		}
+		
+		
+		if (category1[0]!="All" && category1[1]!="")
+		{
+			$.getJSON(jsondatafile,function (data) 
+			{
+		var visitorscurrday=0;
+		var visitorspastday=0;
+		var visitorspastdayper1=0;
+		var visitorspastweek=0;
+		var visitorspastweekper1=0;
+		var visitorspastmonth=0;
+		var visitorspastmonthper1=0;
+		var visitorspastyear=0;
+		var visitorspastyearper1=0;
+		
+		var convcurrday=0;
+		var convpastday=0;
+		var convpastdayper1=0;
+		var convpastweek=0;
+		var convpastweekper1=0;
+		var convpastmonth=0;
+		var convpastmonthper1=0;	
+		var convpastyear=0;
+		var convpastyearper1=0;
+	
+		var transcurrday=0;
+		var transpastday=0;
+		var transpastdayper1=0;
+		var transpastweek=0;
+		var transpastweekper1=0;
+		var transpastmonth=0;
+		var transpastmonthper1=0;
+		var transpastyear=0;
+		var transpastyearper1=0;
+		
+		var salescurrday=0;
+		var salespastday=0;
+		var salespastdayper1=0;
+		var salespastweek=0;
+		var salespastweekper1=0;
+		var salespastmonth=0;
+		var salespastmonthper1=0;
+		var salespastyear=0;
+		var salespastyearper1=0;
+		
+		var itsoldcurrday=0;
+		var itsoldpastday=0;
+		var itsoldpastdayper1=0;
+		var itsoldpastweek=0;
+		var itsoldpastweekper1=0;
+		var itsoldpastmonth=0;
+		var itsoldpastmonthper1=0;
+		var itsoldpastyear=0;
+		var itsoldpastyearper1=0;
+		var sitename1= new Array();		
+			
+			for (j=0;j<category1.length;j++)
+			{	
+					if (category1[j].indexOf("_")>0)
+					{
+					var chainname=category1[j].replace("_"," ");
+					}
+					if (category1[j].indexOf("_")==-1)
+					{
+					var chainname=category1[j];
+					}
+			
+				for (i=0;i<data.length;i++)
+				{
+					if (data[i].chains==chainname)	
+					{
+		visitorscurrday=visitorscurrday+parseInt(data[i].visitorscurrday);
+		visitorspastday=visitorspastday+parseInt(data[i].visitorspastday);
+		visitorspastdayper1=(visitorscurrday-visitorspastday)/visitorscurrday*100;
+		visitorspastweek=visitorspastweek+parseInt(data[i].visitorspastweek);
+		visitorspastweekper1=(visitorscurrday-visitorspastweek)/visitorscurrday*100;
+		visitorspastmonth=visitorspastmonth+parseInt(data[i].visitorspastmonth);
+		visitorspastmonthper1=(visitorscurrday-visitorspastmonth)/visitorscurrday*100;
+		visitorspastyear=visitorspastyear+parseInt(data[i].visitorspastyear);
+		visitorspastyearper1=(visitorscurrday-visitorspastyear)/visitorscurrday*100;
+		
+		convcurrday=convcurrday+parseFloat(data[i].convcurrday);
+		convpastday=convpastday+parseFloat(data[i].convpastday);
+		convpastdayper1=(convcurrday-convpastday)/convcurrday*100;
+		convpastweek=convpastweek+parseFloat(data[i].convpastweek);
+		convpastweekper1=(convcurrday-convpastweek)/convcurrday*100;
+		convpastmonth=convpastmonth+parseFloat(data[i].convpastmonth);
+		convpastmonthper1=(convcurrday-convpastmonth)/convcurrday*100;
+		convpastyear=convpastyear+parseFloat(data[i].convpastyear);
+		convpastyearper1=(convcurrday-convpastyear)/convcurrday*100;
+		
+		transcurrday=transcurrday+parseInt(data[i].transcurrday);
+		transpastday=transpastday+parseInt(data[i].transpastday);
+		transpastdayper1=(transcurrday-transpastday)/transcurrday*100;
+		transpastweek=transpastweek+parseInt(data[i].transpastweek);
+		transpastweekper1=(transcurrday-transpastweek)/transcurrday*100;
+		transpastmonth=transpastmonth+parseInt(data[i].transpastmonth);
+		transpastmonthper1=(transcurrday-transpastmonth)/transcurrday*100;
+		transpastyear=transpastyear+parseInt(data[i].transpastyear);
+		transpastyearper1=(transcurrday-transpastyear)/transcurrday*100;
+		
+		salescurrday=salescurrday+parseInt(data[i].salescurrday);
+		salespastday=salespastday+parseInt(data[i].salespastday);
+		salespastdayper1=(salescurrday-salespastday)/salescurrday*100;
+		salespastweek=salespastweek+parseInt(data[i].salespastweek);
+		salespastweekper1=(salescurrday-salespastweek)/salescurrday*100;
+		salespastmonth=salespastmonth+parseInt(data[i].salespastmonth);
+		salespastmonthper1=(salescurrday-salespastmonth)/salescurrday*100;
+		salespastyear=salespastyear+parseInt(data[i].salespastyear);
+		salespastyearper1=(salescurrday-salespastyear)/salescurrday*100;
+		
+		itsoldcurrday=itsoldcurrday+parseInt(data[i].itsoldcurrday);
+		itsoldpastday=itsoldpastday+parseInt(data[i].itsoldpastday);
+		itsoldpastdayper1=(itsoldcurrday-itsoldpastday)/itsoldcurrday*100;
+		itsoldpastweek=itsoldpastweek+parseInt(data[i].itsoldpastweek);
+		itsoldpastweekper1=(itsoldcurrday-itsoldpastweek)/itsoldcurrday*100;
+		itsoldpastmonth=itsoldpastmonth+parseInt(data[i].itsoldpastmonth);
+		itsoldpastmonthper1=(itsoldcurrday-itsoldpastmonth)/itsoldcurrday*100;
+		itsoldpastyear=itsoldpastyear+parseInt(data[i].itsoldpastyear);
+		itsoldpastyearper1=(itsoldcurrday-itsoldpastyear)/itsoldcurrday*100;
+			
+			
+					if (data[i].sites.indexOf(" ")>0)
+					{
+					var sitename=data[i].sites.replace(" ","_");
+					}
+					
+					if (data[i].sites.indexOf(" ")==-1)
+					{
+					var sitename=data[i].sites;
+					}
+					
+					if ($.inArray(sitename,sitename1)==-1)
+					{
+					sitename1.push(sitename);
+					$("#category2").append("<option value="+sitename+">"+sitename+"</option>");
+					}
+					
+					$("#category2").multiselect('rebuild');
+					}	
+				}
+			}
+			
+
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report"+Date()+"</caption>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors Current Day<br>"+visitorscurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Day</span><br>"+visitorspastday+"<br>"+visitorspastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Week</span><br>"+visitorspastweek+"<br>"+visitorspastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Month</span><br>"+visitorspastmonth+"<br>"+visitorspastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Year</span><br>"+visitorspastyear+"<br>"+visitorspastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Conversion Current Day<br>"+convcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Day</span><br>"+convpastday.toFixed(2)+"<br>"+convpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Week</span><br>"+convpastweek.toFixed(2)+"<br>"+convpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Month</span><br>"+convpastmonth.toFixed(2)+"<br>"+convpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Year</span><br>"+convpastyear.toFixed(2)+"<br>"+convpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Transaction Current Day<br>"+transcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Day</span><br>"+transpastday+"<br>"+transpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Week</span><br>"+transpastweek+"<br>"+transpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Month</span><br>"+transpastmonth+"<br>"+transpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Year</span><br>"+transpastyear+"<br>"+transpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Sales Current Day<br>"+salescurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Day</span><br>"+salespastday+"<br>"+salespastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Week</span><br>"+salespastweek+"<br>"+salespastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Month</span><br>"+salespastmonth+"<br>"+salespastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Year</span><br>"+salespastyear+"<br>"+salespastyearper1.toFixed(2) +"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Sold Current Day<br>"+itsoldcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>items Sold Past Day</span><br>"+itsoldpastday+"<br>"+itsoldpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Week</span><br>"+itsoldpastweek+"<br>"+itsoldpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Month</span><br>"+itsoldpastmonth+"<br>"+itsoldpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Year</span><br>"+itsoldpastyear+"<br>"+itsoldpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"</table>";
+
+		$(".container").find("#tablediv").empty();
+		$(".container").find("#tablediv").append(table1);
+		});
+		}
+});
+	
+	
+	
+		$("#category2").change(function()
+		{
+		category2=$("#category2").val();
+		$("#category3").empty();
+		$("#category3").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category3").multiselect('rebuild');
+			
+			
+			$.getJSON(jsondatafile,function (data) 
+			{
+		var visitorscurrday=0;
+		var visitorspastday=0;
+		var visitorspastdayper1=0;
+		var visitorspastweek=0;
+		var visitorspastweekper1=0;
+		var visitorspastmonth=0;
+		var visitorspastmonthper1=0;
+		var visitorspastyear=0;
+		var visitorspastyearper1=0;
+		
+		var convcurrday=0;
+		var convpastday=0;
+		var convpastdayper1=0;
+		var convpastweek=0;
+		var convpastweekper1=0;
+		var convpastmonth=0;
+		var convpastmonthper1=0;	
+		var convpastyear=0;
+		var convpastyearper1=0;
+	
+		var transcurrday=0;
+		var transpastday=0;
+		var transpastdayper1=0;
+		var transpastweek=0;
+		var transpastweekper1=0;
+		var transpastmonth=0;
+		var transpastmonthper1=0;
+		var transpastyear=0;
+		var transpastyearper1=0;
+		
+		var salescurrday=0;
+		var salespastday=0;
+		var salespastdayper1=0;
+		var salespastweek=0;
+		var salespastweekper1=0;
+		var salespastmonth=0;
+		var salespastmonthper1=0;
+		var salespastyear=0;
+		var salespastyearper1=0;
+		
+		var itsoldcurrday=0;
+		var itsoldpastday=0;
+		var itsoldpastdayper1=0;
+		var itsoldpastweek=0;
+		var itsoldpastweekper1=0;
+		var itsoldpastmonth=0;
+		var itsoldpastmonthper1=0;
+		var itsoldpastyear=0;
+		var itsoldpastyearper1=0;
+		var zones1 = new Array();
+		
+			for (j=0;j<category2.length;j++)
+			{
+					if (category2[j].indexOf("_")>0)
+					{
+					var sitename=category2[j].replace("_"," ");
+					}
+					
+					if (category2[j].indexOf("_")==-1)
+					{
+					var sitename=category2[j];
+					}
+					
+				
+				for (i=0;i<data.length;i++)
+					{	
+					if (data[i].sites==sitename)	
+					{
+		visitorscurrday=visitorscurrday+parseInt(data[i].visitorscurrday);
+		visitorspastday=visitorspastday+parseInt(data[i].visitorspastday);
+		visitorspastdayper1=(visitorscurrday-visitorspastday)/visitorscurrday*100;
+		visitorspastweek=visitorspastweek+parseInt(data[i].visitorspastweek);
+		visitorspastweekper1=(visitorscurrday-visitorspastweek)/visitorscurrday*100;
+		visitorspastmonth=visitorspastmonth+parseInt(data[i].visitorspastmonth);
+		visitorspastmonthper1=(visitorscurrday-visitorspastmonth)/visitorscurrday*100;
+		visitorspastyear=visitorspastyear+parseInt(data[i].visitorspastyear);
+		visitorspastyearper1=(visitorscurrday-visitorspastyear)/visitorscurrday*100;
+		
+		
+		convcurrday=convcurrday+parseFloat(data[i].convcurrday);
+		convpastday=convpastday+parseFloat(data[i].convpastday);
+		convpastdayper1=(convcurrday-convpastday)/convcurrday*100;
+		convpastweek=convpastweek+parseFloat(data[i].convpastweek);
+		convpastweekper1=(convcurrday-convpastweek)/convcurrday*100;
+		convpastmonth=convpastmonth+parseFloat(data[i].convpastmonth);
+		convpastmonthper1=(convcurrday-convpastmonth)/convcurrday*100;
+		convpastyear=convpastyear+parseFloat(data[i].convpastyear);
+		convpastyearper1=(convcurrday-convpastyear)/convcurrday*100;
+		
+		
+		transcurrday=transcurrday+parseInt(data[i].transcurrday);
+		transpastday=transpastday+parseInt(data[i].transpastday);
+		transpastdayper1=(transcurrday-transpastday)/transcurrday*100;
+		transpastweek=transpastweek+parseInt(data[i].transpastweek);
+		transpastweekper1=(transcurrday-transpastweek)/transcurrday*100;
+		transpastmonth=transpastmonth+parseInt(data[i].transpastmonth);
+		transpastmonthper1=(transcurrday-transpastmonth)/transcurrday*100;
+		transpastyear=transpastyear+parseInt(data[i].transpastyear);
+		transpastyearper1=(transcurrday-transpastyear)/transcurrday*100;
+		
+		
+		salescurrday=salescurrday+parseInt(data[i].salescurrday);
+		salespastday=salespastday+parseInt(data[i].salespastday);
+		salespastdayper1=(salescurrday-salespastday)/salescurrday*100;
+		salespastweek=salespastweek+parseInt(data[i].salespastweek);
+		salespastweekper1=(salescurrday-salespastweek)/salescurrday*100;
+		salespastmonth=salespastmonth+parseInt(data[i].salespastmonth);
+		salespastmonthper1=(salescurrday-salespastmonth)/salescurrday*100;
+		salespastyear=salespastyear+parseInt(data[i].salespastyear);
+		salespastyearper1=(salescurrday-salespastyear)/salescurrday*100;
+		
+		itsoldcurrday=itsoldcurrday+parseInt(data[i].itsoldcurrday);
+		itsoldpastday=itsoldpastday+parseInt(data[i].itsoldpastday);
+		itsoldpastdayper1=(itsoldcurrday-itsoldpastday)/itsoldcurrday*100;
+		itsoldpastweek=itsoldpastweek+parseInt(data[i].itsoldpastweek);
+		itsoldpastweekper1=(itsoldcurrday-itsoldpastweek)/itsoldcurrday*100;
+		itsoldpastmonth=itsoldpastmonth+parseInt(data[i].itsoldpastmonth);
+		itsoldpastmonthper1=(itsoldcurrday-itsoldpastmonth)/itsoldcurrday*100;
+		itsoldpastyear=itsoldpastyear+parseInt(data[i].itsoldpastyear);
+		itsoldpastyearper1=(itsoldcurrday-itsoldpastyear)/itsoldcurrday*100;
+		
+					if (data[i].zones.indexOf(" ")>0)
+					{
+					var zonename=data[i].zones.replace(" ","_");
+					}
+					if (data[i].zones.indexOf(" ")==-1)
+					{
+					var zonename=data[i].zones;
+					}
+		
+					if ($.inArray(zonename,zones1)==-1)
+					{
+					zones1.push(zonename);
+					$("#category3").append("<option value="+zonename+">"+zonename+"</option>");
+					}	
+				
+					$("#category3").multiselect('rebuild');
+					}
+				}
+			}
+				
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report"+Date()+"</.";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors Current Day<br>"+visitorscurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Day</span><br>"+visitorspastday+"<br>"+visitorspastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Week</span><br>"+visitorspastweek+"<br>"+visitorspastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Month</span><br>"+visitorspastmonth+"<br>"+visitorspastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Year</span><br>"+visitorspastyear+"<br>"+visitorspastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Conversion Current Day<br>"+convcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Day</span><br>"+convpastday+"<br>"+convpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Week</span><br>"+convpastweek+"<br>"+convpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Month</span><br>"+convpastmonth.toFixed(2)+"<br>"+convpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Year</span><br>"+convpastyear.toFixed(2)+"<br>"+convpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Transaction Current Day<br>"+transcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Day</span><br>"+transpastday+"<br>"+transpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Week</span><br>"+transpastweek+"<br>"+transpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Month</span><br>"+transpastmonth+"<br>"+transpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Year</span><br>"+transpastyear+"<br>"+transpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Sales Current Day<br>"+salescurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Day</span><br>"+salespastday+"<br>"+salespastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Week</span><br>"+salespastweek+"<br>"+salespastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Month</span><br>"+salespastmonth+"<br>"+salespastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Year</span><br>"+salespastyear+"<br>"+salespastyearper1.toFixed(2) +"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Sold Current Day<br>"+itsoldcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>items Sold Past Day</span><br>"+itsoldpastday+"<br>"+itsoldpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Week</span><br>"+itsoldpastweek+"<br>"+itsoldpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Month</span><br>"+itsoldpastmonth+"<br>"+itsoldpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Year</span><br>"+itsoldpastyear+"<br>"+itsoldpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"</table>";
+		$(".container").find("#tablediv").empty();
+		$(".container").find("#tablediv").append(table1);
+			});
+	});
+	
+
+
+$("#category3").change(function()
+	{
+		category2=$("#category2").val();
+		category3=$("#category3").val();
+		$("#category4").empty();
+		$("#category4").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category4").multiselect('rebuild');
+			
+			$.getJSON(jsondatafile,function(data) 
+			{
+		var visitorscurrday=0;
+		var visitorspastday=0;
+		var visitorspastdayper1=0;
+		var visitorspastweek=0;
+		var visitorspastweekper1=0;
+		var visitorspastmonth=0;
+		var visitorspastmonthper1=0;
+		var visitorspastyear=0;
+		var visitorspastyearper1=0;
+		
+		var convcurrday=0;
+		var convpastday=0;
+		var convpastdayper1=0;
+		var convpastweek=0;
+		var convpastweekper1=0;
+		var convpastmonth=0;
+		var convpastmonthper1=0;	
+		var convpastyear=0;
+		var convpastyearper1=0;
+	
+		var transcurrday=0;
+		var transpastday=0;
+		var transpastdayper1=0;
+		var transpastweek=0;
+		var transpastweekper1=0;
+		var transpastmonth=0;
+		var transpastmonthper1=0;
+		var transpastyear=0;
+		var transpastyearper1=0;
+		
+		var salescurrday=0;
+		var salespastday=0;
+		var salespastdayper1=0;
+		var salespastweek=0;
+		var salespastweekper1=0;
+		var salespastmonth=0;
+		var salespastmonthper1=0;
+		var salespastyear=0;
+		var salespastyearper1=0;
+		
+		var itsoldcurrday=0;
+		var itsoldpastday=0;
+		var itsoldpastdayper1=0;
+		var itsoldpastweek=0;
+		var itsoldpastweekper1=0;
+		var itsoldpastmonth=0;
+		var itsoldpastmonthper1=0;
+		var itsoldpastyear=0;
+		var itsoldpastyearper1=0;
+		
+
+			for (m=0;m<category2.length;m++)
+			{	
+	
+			for (j=0;j<category3.length;j++)
+			{	
+					if (category2[m].indexOf("_")>0)
+					{
+					var sitename=category2[m].replace("_"," ");
+					}
+					
+					if (category2[m].indexOf("_")==-1)
+					{
+					var sitename=category2[m];
+					}
+					
+					if (category3[j].indexOf("_")>0)
+					{
+					var zonename=category3[j].replace("_"," ");
+					}
+					
+					if (category3[j].indexOf("_")==-1)
+					{
+					var zonename=category3[j];
+					}
+					
+				for (i=0;i<data.length;i++)
+				{
+					if (data[i].zones==zonename && data[i].sites==sitename)	
+					{
+			
+		visitorscurrday=visitorscurrday+parseInt(data[i].visitorscurrday);
+		visitorspastday=visitorspastday+parseInt(data[i].visitorspastday);
+		visitorspastdayper1=(visitorscurrday-visitorspastday)/visitorscurrday*100;
+		visitorspastweek=visitorspastweek+parseInt(data[i].visitorspastweek);
+		visitorspastweekper1=(visitorscurrday-visitorspastweek)/visitorscurrday*100;
+		visitorspastmonth=visitorspastmonth+parseInt(data[i].visitorspastmonth);
+		visitorspastmonthper1=(visitorscurrday-visitorspastmonth)/visitorscurrday*100;
+		visitorspastyear=visitorspastyear+parseInt(data[i].visitorspastyear);
+		visitorspastyearper1=(visitorscurrday-visitorspastyear)/visitorscurrday*100;
+		
+		
+		convcurrday=convcurrday+parseFloat(data[i].convcurrday);
+		convpastday=convpastday+parseFloat(data[i].convpastday);
+		convpastdayper1=(convcurrday-convpastday)/convcurrday*100;
+		convpastweek=convpastweek+parseFloat(data[i].convpastweek);
+		convpastweekper1=(convcurrday-convpastweek)/convcurrday*100;
+		convpastmonth=convpastmonth+parseFloat(data[i].convpastmonth);
+		convpastmonthper1=(convcurrday-convpastmonth)/convcurrday*100;
+		convpastyear=convpastyear+parseFloat(data[i].convpastyear);
+		convpastyearper1=(convcurrday-convpastyear)/convcurrday*100;
+		
+		
+		transcurrday=transcurrday+parseInt(data[i].transcurrday);
+		transpastday=transpastday+parseInt(data[i].transpastday);
+		transpastdayper1=(transcurrday-transpastday)/transcurrday*100;
+		transpastweek=transpastweek+parseInt(data[i].transpastweek);
+		transpastweekper1=(transcurrday-transpastweek)/transcurrday*100;
+		transpastmonth=transpastmonth+parseInt(data[i].transpastmonth);
+		transpastmonthper1=(transcurrday-transpastmonth)/transcurrday*100;
+		transpastyear=transpastyear+parseInt(data[i].transpastyear);
+		transpastyearper1=(transcurrday-transpastyear)/transcurrday*100;
+		
+		
+		salescurrday=salescurrday+parseInt(data[i].salescurrday);
+		salespastday=salespastday+parseInt(data[i].salespastday);
+		salespastdayper1=(salescurrday-salespastday)/salescurrday*100;
+		salespastweek=salespastweek+parseInt(data[i].salespastweek);
+		salespastweekper1=(salescurrday-salespastweek)/salescurrday*100;
+		salespastmonth=salespastmonth+parseInt(data[i].salespastmonth);
+		salespastmonthper1=(salescurrday-salespastmonth)/salescurrday*100;
+		salespastyear=salespastyear+parseInt(data[i].salespastyear);
+		salespastyearper1=(salescurrday-salespastyear)/salescurrday*100;
+		
+		itsoldcurrday=itsoldcurrday+parseInt(data[i].itsoldcurrday);
+		itsoldpastday=itsoldpastday+parseInt(data[i].itsoldpastday);
+		itsoldpastdayper1=(itsoldcurrday-itsoldpastday)/itsoldcurrday*100;
+		itsoldpastweek=itsoldpastweek+parseInt(data[i].itsoldpastweek);
+		itsoldpastweekper1=(itsoldcurrday-itsoldpastweek)/itsoldcurrday*100;
+		itsoldpastmonth=itsoldpastmonth+parseInt(data[i].itsoldpastmonth);
+		itsoldpastmonthper1=(itsoldcurrday-itsoldpastmonth)/itsoldcurrday*100;
+		itsoldpastyear=itsoldpastyear+parseInt(data[i].itsoldpastyear);
+		itsoldpastyearper1=(itsoldcurrday-itsoldpastyear)/itsoldcurrday*100;
+
+			$("#category4").append("<option value="+data[i].date+">"+data[i].date+"</option>");
+			$("#category4").multiselect('rebuild');
+					}
+				}
+			}
+		}
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report"+Date()+"</caption>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors Current Day<br>"+visitorscurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Day</span><br>"+visitorspastday+"<br>"+visitorspastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Week</span><br>"+visitorspastweek+"<br>"+visitorspastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Month</span><br>"+visitorspastmonth+"<br>"+visitorspastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Year</span><br>"+visitorspastyear+"<br>"+visitorspastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Conversion Current Day<br>"+convcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Day</span><br>"+convpastday+"<br>"+convpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Week</span><br>"+convpastweek+"<br>"+convpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Month</span><br>"+convpastmonth.toFixed(2)+"<br>"+convpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Year</span><br>"+convpastyear.toFixed(2)+"<br>"+convpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Transaction Current Day<br>"+transcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Day</span><br>"+transpastday+"<br>"+transpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Week</span><br>"+transpastweek+"<br>"+transpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Month</span><br>"+transpastmonth+"<br>"+transpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Year</span><br>"+transpastyear+"<br>"+transpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Sales Current Day<br>"+salescurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Day</span><br>"+salespastday+"<br>"+salespastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Week</span><br>"+salespastweek+"<br>"+salespastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Month</span><br>"+salespastmonth+"<br>"+salespastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Year</span><br>"+salespastyear+"<br>"+salespastyearper1.toFixed(2) +"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Sold Current Day<br>"+itsoldcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>items Sold Past Day</span><br>"+itsoldpastday+"<br>"+itsoldpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Week</span><br>"+itsoldpastweek+"<br>"+itsoldpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Month</span><br>"+itsoldpastmonth+"<br>"+itsoldpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Year</span><br>"+itsoldpastyear+"<br>"+itsoldpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"</table>";
+		$(".container").find("#tablediv").empty();
+		$(".container").find("#tablediv").append(table1);
+			
+			});
+	})	;
+		
+	
+	$("#category4").change(function()
+	{
+		var category4=$("#category4").val();
+		
+		var datetimeno=category4.search("-");
+		var datefrom=category4.substr(0,datetimeno);
+		var dateto=category4.substr(datetimeno+2);
+		
+		var dayfrom1=datefrom.substr(0,2);
+		var monthfrom1=datefrom.substr(3,2);
+		var yearfrom1=datefrom.substr(6,4);
+		var timefrom1=datefrom.substr(11);
+		
+		var datefrom3=monthfrom1+"/"+dayfrom1+"/"+yearfrom1+" "+timefrom1;
+		datefrom2=new Date(datefrom3);
+				
+		var dayto1=dateto.substr(0,2);
+		var monthto1=dateto.substr(3,2);
+		var yearto1=dateto.substr(6,4);
+		var timeto1=dateto.substr(11);
+		
+		var dateto3=monthto1+"/"+dayto1+"/"+yearto1 +" "+timeto1;
+		dateto2=new Date(dateto3);
+
+		$.getJSON(jsondatafile,function (data) 
+		{
+
+		var visitorscurrday=0;
+		var visitorspastday=0;
+		var visitorspastdayper1=0;
+		var visitorspastweek=0;
+		var visitorspastweekper1=0;
+		var visitorspastmonth=0;
+		var visitorspastmonthper1=0;
+		var visitorspastyear=0;
+		var visitorspastyearper1=0;
+		
+		var convcurrday=0;
+		var convpastday=0;
+		var convpastdayper1=0;
+		var convpastweek=0;
+		var convpastweekper1=0;
+		var convpastmonth=0;
+		var convpastmonthper1=0;	
+		var convpastyear=0;
+		var convpastyearper1=0;
+	
+		var transcurrday=0;
+		var transpastday=0;
+		var transpastdayper1=0;
+		var transpastweek=0;
+		var transpastweekper1=0;
+		var transpastmonth=0;
+		var transpastmonthper1=0;
+		var transpastyear=0;
+		var transpastyearper1=0;
+		
+		var salescurrday=0;
+		var salespastday=0;
+		var salespastdayper1=0;
+		var salespastweek=0;
+		var salespastweekper1=0;
+		var salespastmonth=0;
+		var salespastmonthper1=0;
+		var salespastyear=0;
+		var salespastyearper1=0;
+		
+		var itsoldcurrday=0;
+		var itsoldpastday=0;
+		var itsoldpastdayper1=0;
+		var itsoldpastweek=0;
+		var itsoldpastweekper1=0;
+		var itsoldpastmonth=0;
+		var itsoldpastmonthper1=0;
+		var itsoldpastyear=0;
+		var itsoldpastyearper1=0;
+
+		
+			for (i=0;i<data.length;i++)
+				{
+					var date2=data[i].date.split('.').join('');
+					var date1=new Date(date2);
+					
+					if ((date1>=datefrom2) && (date1<=dateto2))	
+					{
+		visitorscurrday=visitorscurrday+parseInt(data[i].visitorscurrday);
+		visitorspastday=visitorspastday+parseInt(data[i].visitorspastday);
+		visitorspastdayper1=(visitorscurrday-visitorspastday)/visitorscurrday*100;
+		visitorspastweek=visitorspastweek+parseInt(data[i].visitorspastweek);
+		visitorspastweekper1=(visitorscurrday-visitorspastweek)/visitorscurrday*100;
+		visitorspastmonth=visitorspastmonth+parseInt(data[i].visitorspastmonth);
+		visitorspastmonthper1=(visitorscurrday-visitorspastmonth)/visitorscurrday*100;
+		visitorspastyear=visitorspastyear+parseInt(data[i].visitorspastyear);
+		visitorspastyearper1=(visitorscurrday-visitorspastyear)/visitorscurrday*100;
+		
+		
+		convcurrday=convcurrday+parseFloat(data[i].convcurrday);
+		convpastday=convpastday+parseFloat(data[i].convpastday);
+		convpastdayper1=(convcurrday-convpastday)/convcurrday*100;
+		convpastweek=convpastweek+parseFloat(data[i].convpastweek);
+		convpastweekper1=(convcurrday-convpastweek)/convcurrday*100;
+		convpastmonth=convpastmonth+parseFloat(data[i].convpastmonth);
+		convpastmonthper1=(convcurrday-convpastmonth)/convcurrday*100;
+		convpastyear=convpastyear+parseFloat(data[i].convpastyear);
+		convpastyearper1=(convcurrday-convpastyear)/convcurrday*100;
+		
+		
+		transcurrday=transcurrday+parseInt(data[i].transcurrday);
+		transpastday=transpastday+parseInt(data[i].transpastday);
+		transpastdayper1=(transcurrday-transpastday)/transcurrday*100;
+		transpastweek=transpastweek+parseInt(data[i].transpastweek);
+		transpastweekper1=(transcurrday-transpastweek)/transcurrday*100;
+		transpastmonth=transpastmonth+parseInt(data[i].transpastmonth);
+		transpastmonthper1=(transcurrday-transpastmonth)/transcurrday*100;
+		transpastyear=transpastyear+parseInt(data[i].transpastyear);
+		transpastyearper1=(transcurrday-transpastyear)/transcurrday*100;
+		
+		
+		salescurrday=salescurrday+parseInt(data[i].salescurrday);
+		salespastday=salespastday+parseInt(data[i].salespastday);
+		salespastdayper1=(salescurrday-salespastday)/salescurrday*100;
+		salespastweek=salespastweek+parseInt(data[i].salespastweek);
+		salespastweekper1=(salescurrday-salespastweek)/salescurrday*100;
+		salespastmonth=salespastmonth+parseInt(data[i].salespastmonth);
+		salespastmonthper1=(salescurrday-salespastmonth)/salescurrday*100;
+		salespastyear=salespastyear+parseInt(data[i].salespastyear);
+		salespastyearper1=(salescurrday-salespastyear)/salescurrday*100;
+		
+		itsoldcurrday=itsoldcurrday+parseInt(data[i].itsoldcurrday);
+		itsoldpastday=itsoldpastday+parseInt(data[i].itsoldpastday);
+		itsoldpastdayper1=(itsoldcurrday-itsoldpastday)/itsoldcurrday*100;
+		itsoldpastweek=itsoldpastweek+parseInt(data[i].itsoldpastweek);
+		itsoldpastweekper1=(itsoldcurrday-itsoldpastweek)/itsoldcurrday*100;
+		itsoldpastmonth=itsoldpastmonth+parseInt(data[i].itsoldpastmonth);
+		itsoldpastmonthper1=(itsoldcurrday-itsoldpastmonth)/itsoldcurrday*100;
+		itsoldpastyear=itsoldpastyear+parseInt(data[i].itsoldpastyear);
+		itsoldpastyearper1=(itsoldcurrday-itsoldpastyear)/itsoldcurrday*100;
+			}
+			}
+		table1="<table width='100%;' border=8  id='trendanalysistable'>";
+		table1=table1+"<caption style='font-size:14pt;'><img src='logo.jpeg'/>Hourly Retail Comparision Report"+Date()+"</caption>";
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Visitors Current Day<br>"+visitorscurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Day</span><br>"+visitorspastday+"<br>"+visitorspastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Week</span><br>"+visitorspastweek+"<br>"+visitorspastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors past Month</span><br>"+visitorspastmonth+"<br>"+visitorspastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Visitors Past Year</span><br>"+visitorspastyear+"<br>"+visitorspastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Conversion Current Day<br>"+convcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Day</span><br>"+convpastday.toFixed(2)+"<br>"+convpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Week</span><br>"+convpastweek.toFixed(2)+"<br>"+convpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Month</span><br>"+convpastmonth.toFixed(2)+"<br>"+convpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Conversion Past Year</span><br>"+convpastyear.toFixed(2)+"<br>"+convpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Transaction Current Day<br>"+transcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Day</span><br>"+transpastday+"<br>"+transpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Week</span><br>"+transpastweek+"<br>"+transpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Month</span><br>"+transpastmonth+"<br>"+transpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Transaction Past Year</span><br>"+transpastyear+"<br>"+transpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Sales Current Day<br>"+salescurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Day</span><br>"+salespastday+"<br>"+salespastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Week</span><br>"+salespastweek+"<br>"+salespastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Month</span><br>"+salespastmonth+"<br>"+salespastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Sales Past Year</span><br>"+salespastyear+"<br>"+salespastyearper1.toFixed(2) +"%</td></tr>";
+
+		table1=table1+"<tr><td style='height:80px;background-color:#ff9933;text-align:center;color:white;font-size:15pt;'>Items Sold Current Day<br>"+itsoldcurrday+"</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>items Sold Past Day</span><br>"+itsoldpastday+"<br>"+itsoldpastdayper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Week</span><br>"+itsoldpastweek+"<br>"+itsoldpastweekper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Month</span><br>"+itsoldpastmonth+"<br>"+itsoldpastmonthper1.toFixed(2)+"%</td>";
+		table1=table1+"<td style='height:80px;background-color:#ffffff;text-align:center;color:#000000;font-size:15pt;'><span style='color:#ff9933;'>Items Sold Past Year</span><br>"+itsoldpastyear+"<br>"+itsoldpastyearper1.toFixed(2)+"%</td></tr>";
+
+		table1=table1+"</table>";
+		$(".container").find("#tablediv").empty();
+		$(".container").find("#tablediv").append(table1);
+	
+
+});
+});	
+});<!----DOCUMENT.READY--->
+
+
+function printData()
+{
+   var divToPrint=document.getElementById("trendanalysistable");
+   newWin= window.open("");
+   newWin.document.write(divToPrint.outerHTML);
+   newWin.print();
+   newWin.close();
+}
+		
+</script>
+	
+</html>

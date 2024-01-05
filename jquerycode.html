@@ -1,0 +1,179 @@
+		
+	$("#category1").change(function()
+	{
+		category1=$("#category1").split(",");
+		
+		for (j=0;j<category1.length;j++)
+		{
+			if (category1[j]=="All")
+			{
+			
+			$.getJSON("https://api.myjson.com/bins/2soxd", function (data) 
+			{
+				var datasite= new Array;
+				var data1=new Array;
+				for (i=0;i<data.length;i++)
+				{
+				data1.push([data[i]["visitors"]]);
+				datasite.push(data[i]["site"]);
+				}
+			}	
+				
+			
+			$.ajax({
+			  url: 'https://api.myjson.com/bins/2soxd',
+			  success: function(data){
+				$('#table1').dynatable({
+					dataset: {
+					records:data
+					}     
+				});
+			  }
+			});
+			}
+			
+			
+			
+			
+			
+			
+		}
+		
+		$.getJSON("https://api.myjson.com/bins/2soxd", function (data) 
+		{
+		if($("#category1").val()=="All")
+		{
+		$("#category2").empty();
+		$("#category3").empty();
+		$("#category4").empty();
+		$("#category2").append("<option value='--'>--</option>");
+		$("#category3").append("<option value='--'>--</option>");
+		$("#category4").append("<option value='--'>--</option>");
+			
+		
+		}
+		
+		else
+		{
+		$("#category2").empty();
+		$("#category3").empty();
+		$("#category4").empty();
+		$("#category2").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category3").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category4").append("<option value='--SELECT--'>--SELECT--</option>");
+		
+		
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val())
+		{
+			$("#category2").append("<option value='"+data[i]["site"]+"'>"+data[i]["site"]+"</option>");
+			$("#category3").append("<option value='"+data[i]["zone"]+"'>"+data[i]["zone"]+"</option>");
+			$("#category4").append("<option value='"+data[i]["date"]+"'>"+data[i]["date"]+"</option>");
+		}
+		}
+		
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val() && $("#category2").val()=="--SELECT--" && $("#category3").val()=="--SELECT--" && $("#category4").val()=="--SELECT--")
+		{
+		$("#iframe1").attr("src","visitorsdata.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+		
+		$("#iframe2").attr("src","highcharts.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+		}
+		}
+		
+		}
+		
+		
+		
+		});
+	});
+
+	$("#category2").change(function()
+	{
+		$("#category3").empty();
+		$("#category4").empty();
+		$("#category3").append("<option value='--SELECT--'>--SELECT--</option>");
+		$("#category4").append("<option value='--SELECT--'>--SELECT--</option>");
+		
+		
+		$.getJSON("https://api.myjson.com/bins/2soxd", function (data) 
+		{
+		
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val() && data[i]["site"]==$("#category2").val())
+		{
+		
+			$("#category3").append("<option value='"+data[i]["zone"]+"'>"+data[i]["zone"]+"</option>");
+			$("#category4").append("<option value='"+data[i]["date"]+"'>"+data[i]["date"]+"</option>");
+		}
+		}
+		
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val() && data[i]["site"]==$("#category2").val() && $("#category3").val()=="--SELECT--" && $("#category4").val()=="--SELECT--")
+		{
+		$("#iframe1").attr("src","visitorsdata.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+		
+		$("#iframe2").attr("src","highcharts.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+		}
+		}
+		
+		});
+	});
+	
+	
+	$("#category3").change(function()
+	{
+	
+		$("#category4").empty();
+		$("#category4").append("<option value='--SELECT--'>--SELECT--</option>");
+	
+		$.getJSON("https://api.myjson.com/bins/2soxd", function (data) 
+		{
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val() && data[i]["site"]==$("#category2").val() && data[i]["zone"]==$("#category3").val())
+		{
+			$("#category4").append("<option value='"+data[i]["date"]+"'>"+data[i]["date"]+"</option>");
+		}
+		}
+
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val() && data[i]["site"]==$("#category2").val() && data[i]["zone"]==$("#category3").val() && $("#category4").val()=="--SELECT--")
+		{
+		$("#iframe1").attr("src","visitorsdata.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+	
+		$("#iframe2").attr("src","highcharts.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+		}
+		}
+		});
+	});
+	
+	
+	$("#category4").change(function()
+	{
+		$.getJSON("https://api.myjson.com/bins/2soxd", function (data) 
+		{
+		for (i=0;i<data.length;i++)
+		{
+		if (data[i]["chains"]==$("#category1").val() && data[i]["site"]==$("#category2").val() && data[i]["zone"]==$("#category3").val() && data[i]["date"]==$("#category4").val())
+		{
+		$("#iframe1").attr("src","visitorsdata.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+	
+		$("#iframe2").attr("src","highcharts.html?category1="+$("#category1").val() + "&category2=" + $("#category2").val()
+		+ "&category3=" + $("#category3").val() + "&category4=" + $("#category4").val() );
+		}
+		}
+		});
+	});

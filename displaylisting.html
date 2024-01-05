@@ -1,0 +1,121 @@
+<html>
+<head>
+
+<html lang="en">
+    <script type="text/ecmascript" src="jqGrid-master/jquery.js"></script> 
+    <script type="text/ecmascript" src="jqGrid-master/js/i18n/grid.locale-en.js"></script>
+    <script type="text/ecmascript" src="jqGrid-master/js/jquery.jqGrid.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+    <link rel="stylesheet" type="text/css" media="screen" href="jqGrid-master/css/ui.jqgrid-bootstrap.css" />
+	<script>
+	
+		$.jgrid.defaults.width = 780;
+		$.jgrid.defaults.responsive = true;
+		$.jgrid.defaults.styleUI = 'Bootstrap';
+	</script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <meta charset="utf-8" />
+    <title>jqGrid Loading Data - JSON</title>
+
+<script>
+$.getJSON("https://api.myjson.com/bins/2soxd", function (data) {
+    //code inside
+    var items = data;
+    var checkIds = [];
+    $.each(items, function (k, v) {
+        if ($.inArray(v.id, checkIds) == -1) {
+            $("#category").append('<option value="' + v.id + '" data-price="' + v.visitors + '">' + v.chains + '</option>');
+            checkIds.push(v.id);
+        }
+    });
+
+    $("#category").on('change', function () {
+        var dept_number = parseInt($(this).val());
+        var price = $(this).find(':selected').data('price');
+        var tochange = false;
+        var total = 0;
+        var totalVisCurrDay= 0;
+        var totalVisPasDay= 0;
+        var totalVisPasWeek= 0;
+        $.each(items, function (k, v) {
+            if (v.id == dept_number) {
+                if (tochange == true) {
+                    $("#category1").append('<option value="' + v.id + '" data-visitorscurrday="' + v.visitorscurrday + '" data-visitorspastday="' + v.visitorspastday + '" data-visitorspastweek="' + v.visitorspastweek + '" data-price="' + v.visitors + '">' + v.site + '</option>');
+                    $("#category2").append('<option value="' + v.id + '" data-visitorscurrday="' + v.visitorscurrday + '" data-visitorspastday="' + v.visitorspastday + '" data-visitorspastweek="' + v.visitorspastweek + '" data-price="' + v.visitors + '">' + v.zone + '</option>');
+                    $("#category3").append('<option value="' + v.id + '" data-visitorscurrday="' + v.visitorscurrday + '" data-visitorspastday="' + v.visitorspastday + '" data-visitorspastweek="' + v.visitorspastweek + '" data-price="' + v.visitors + '">' + v.date + '</option>');
+                } else {
+                    $("#category1").html('<option value="' + v.id + '" data-visitorscurrday="' + v.visitorscurrday + '" data-visitorspastday="' + v.visitorspastday + '" data-visitorspastweek="' + v.visitorspastweek + '" data-price="' + v.visitors + '">' + v.site + '</option>');
+                    $("#category2").html('<option value="' + v.id + '" data-visitorscurrday="' + v.visitorscurrday + '" data-visitorspastday="' + v.visitorspastday + '" data-visitorspastweek="' + v.visitorspastweek + '" data-price="' + v.visitors + '">' + v.zone + '</option>');
+                    $("#category3").html('<option value="' + v.id + '" data-visitorscurrday="' + v.visitorscurrday + '" data-visitorspastday="' + v.visitorspastday + '" data-visitorspastweek="' + v.visitorspastweek + '" data-price="' + v.visitors + '">' + v.date + '</option>');
+                    tochange = true;
+                }
+                total += v.visitors;
+                totalVisCurrDay += v.visitorscurrday;
+                totalVisPasDay += v.visitorspastday;
+                totalVisPasWeek += v.visitorspastweek;
+            }
+        });
+        $('#dept-input').val(dept_number);
+        $('#price-input').val(total);
+        $("#totalVisitors").text(total);
+        $("#totalVisitorsCurrentDay").text(totalVisCurrDay);
+        $("#totalVisitorsPastDay").text(totalVisPasDay);
+        $("#totalVisitorsPastWeek").text(totalVisPasWeek);
+    }).change();
+
+    $("select[id^='category']:not(#category)").on('change', function () {
+        var dept_number = parseInt($(this).val());
+        var price = $(this).find(':selected').data('price');
+       var VisitorsCurrentDay = $(this).find(':selected').data('visitorscurrday');
+      var VisitorsPastDay = $(this).find(':selected').data('visitorspastday');
+      var VisitorsPastWeek = $(this).find(':selected').data('visitorspastweek');
+        $('#dept-input').val(dept_number);
+        $('#price-input').val(price);
+      	$("#totalVisitors").text(price);
+       $("#totalVisitorsCurrentDay").text(VisitorsCurrentDay);
+        $("#totalVisitorsPastDay").text(VisitorsPastDay);
+        $("#totalVisitorsPastWeek").text(VisitorsPastWeek);
+    });
+});
+</script>
+</head>
+<body>
+
+<select id="category"></select>
+<select id="category1"></select>
+<select id="category2"></select>
+<select id="category3"></select>
+<br>
+<br>
+<div class="row">
+    <div class="col-sm-2 " id="services_block" style="width: 230px;height: 100px; background-color: orange;color: white; line-height: 30px; text-align: center; font-size: 100%;  font-weight: bold; border-left:3px solid white;
+   border-right:3px solid white;" >
+    Visitors 
+    <br> CURRENT DAY
+<br>
+        <span id="totalVisitorsCurrentDay" style="color: black; font-size: 150%;  font-weight: bold;" > </span>
+    </div>
+<br>
+
+
+    <div class="col-sm-2" id="services_block" style="width: 180px;height: 100px;  background-color: red;color: white;line-height: 30px; text-align: center; font-size: 100%;  font-weight: bold; border-left:3px solid white;
+   border-right:3px solid white;">Visitors 
+    <br> PAST DAY
+    <br>
+        <span id="totalVisitorsPastDay" style="color: black; font-size: 150%;  font-weight: bold;"></span>
+        </div>
+<br>
+
+    <div class="col-sm-2" id="services_block" style="width: 180px;height: 100px;  background-color: red;color: white;line-height: 30px; text-align: center; font-size: 100%;  font-weight: bold; border-left:3px solid white;
+   border-right:3px solid white;">Visitors 
+    <br> PAST WEEK
+    <br>
+        <span id="totalVisitorsPastWeek" style="color: black; font-size: 150%;  font-weight: bold;"></span>
+        </div>
+
+
+        
+  </div>
+<br>
+</body>
+</html>
